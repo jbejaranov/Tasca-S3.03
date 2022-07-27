@@ -60,10 +60,8 @@ public class Main {
                 //Mostrat total diners vendes
                 case 9 -> StoreManager.getInstance(currentStore).showTotalSales();
 
-                case 10 -> {
-                    System.out.println(System.getProperty("user.dir"));
-                    List<List<String>> list = StoreManager.getInstance(currentStore).readFromFile("stock");
-                    System.out.println(list);}
+                //Proves (ELIMINAR!!)
+//                case 10 ->
 
                 //Sortir del programa
                 case 0 -> System.out.println("Sortint del programa");

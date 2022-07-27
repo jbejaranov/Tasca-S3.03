@@ -2,12 +2,14 @@ package org.nivell1.service;
 
 import org.nivell1.utils.ComparadorLlista;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class StoreManager {
 
@@ -46,63 +48,55 @@ public class StoreManager {
     }
 
     public void deleteProduct() {
-        //TODO: borra producto por ID del stock
+        //TODO: borra producto por número en pantalla
+        deleteFromStock();
     }
 
-    public void showStock() {
+    private List<List<String>> getOrderedProductList() {
         List<List<String>> list = readFromFile("stock");
         ComparadorLlista comparadorLlista = new ComparadorLlista();
         list.sort(comparadorLlista);
+        return list;
+    }
 
-        List<List<String>> listDecoration;
-        List<List<String>> listFlower;
-        List<List<String>> listTree;
+    public void showStock() {
+        List<List<String>> list = getOrderedProductList();
 
-        OptionalInt indexFlower = IntStream.range(0, list.size()).filter(i -> "flower".equals(list.get(i).get(0))).findFirst();
-        OptionalInt indexTree = IntStream.range(0, list.size()).filter(i -> "tree".equals(list.get(i).get(0))).findFirst();
+//        List<List<String>> listDecoration;
+//        List<List<String>> listFlower;
+//        List<List<String>> listTree;
+//
+//        OptionalInt indexFlower = IntStream.range(0, list.size()).filter(i -> "flower".equals(list.get(i).get(0))).findFirst();
+//        OptionalInt indexTree = IntStream.range(0, list.size()).filter(i -> "tree".equals(list.get(i).get(0))).findFirst();
+//
+//        //TODO: tractar Optional
+//
+//        listDecoration = list.subList(0, indexFlower.getAsInt());
+//        listFlower = list.subList(indexFlower.getAsInt(), indexTree.getAsInt());
+//        listTree = list.subList(indexTree.getAsInt(), list.size());
+//
+//        printTable(listDecoration, listFlower, listTree);
 
-        //TODO: tractar Optional
+        Map<String, List<List<String>>> mapList = list.stream()
+                .collect(Collectors.groupingBy(i -> i.get(0)));
 
-        listDecoration = list.subList(0, indexFlower.getAsInt());
-        listFlower = list.subList(indexFlower.getAsInt(), indexTree.getAsInt());
-        listTree = list.subList(indexTree.getAsInt(), list.size());
-
-        int index = 1;
-        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu(€)", "Quantitat", "Material");
-        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
-        for (List<String> value : listDecoration) {
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
-            index++;
-        }
-        System.out.println();
-        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Color");
-        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
-
-        for (List<String> value : listFlower) {
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
-            index++;
-        }
-        System.out.println();
-        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Altura (m)");
-        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
-
-        for (List<String> value : listTree) {
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
-            index++;
-        }
+        printTable(mapList);
     }
 
     public void getTotalValue() {
-        //TODO: muestra valor total de tienda
+        List<List<String>> list = readFromFile("stock");
+        double valor = list.stream()
+                .map(element -> Double.parseDouble(element.get(2)) * Double.parseDouble(element.get(3)))
+                .reduce(0d, Double::sum);
+
+        DecimalFormat decimalFormat = new DecimalFormat("0.00");
+        System.out.println("El valor total dels productes de la botiga és: " + decimalFormat.format(valor) + " euros");
     }
 
     public void createTicket() {
 
         showStock();
-
-        List<List<String>> list = readFromFile("stock");
-        ComparadorLlista comparadorLlista = new ComparadorLlista();
-        list.sort(comparadorLlista);
+        List<List<String>> stock = getOrderedProductList();
 
         //TODO: crear menú:
         /*
@@ -118,8 +112,15 @@ public class StoreManager {
         //TODO: mirar tb que guarde el valor total. Tb se puede mostrar al cliente en finalizar la compra (cuando pulsa 0)
     }
 
+    //TODO: mètode per canviar número de stock
+
     private void deleteFromStock() {
-        //TODO: recibe ID del producto a borrar, lee del archivo, lo busca, y lo elimina
+        showStock();
+        List<List<String>> stock = getOrderedProductList();
+        //TODO: scanner per demanar quin producte esborrar. imaginem que és el número 1
+        //stock.remove(0);
+        //TODO: canviar nom arxiu on escriu (currentStore)
+        writeToFile(stock, "stock2");
     }
 
     private void addToHistory() {
@@ -135,29 +136,70 @@ public class StoreManager {
     }
 
     public List<List<String>> readFromFile(String fileName) {
-        //TODO: eliminar ultima linea
-        List<List<String>> list = new ArrayList<>();
         String inputFile = "nivell1/src/main/resources/" + fileName + ".txt";
-        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                List<String> listContent = new ArrayList<>();
-                Collections.addAll(listContent, line.split(",")[0],
-                        line.split(",")[1],
-                        line.split(",")[2],
-                        line.split(",")[3],
-                        line.split(",")[4]);
-                list.add(listContent);
-            }
+        List<List<String>> listOfLists = new ArrayList<>();
+
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(inputFile));
+            lines.stream().filter(line -> !line.isEmpty()).toList().forEach(line -> {
+                List<String> innerList = new ArrayList<>(Arrays.asList(line.split(",")));
+                listOfLists.add(innerList);
+            });
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return list;
+        return listOfLists;
     }
 
     //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.
 
-    public void writeToFile() {
-        //TODO: para escribir a un fichero
+    public void writeToFile(List<List<String>> stock, String fileName) {
+        //Convertir a llista de strings preparats pel csv
+        List<String> stockToCSVList = stock.stream()
+                .map(subList -> String.join(",", subList))
+                .toList();
+
+        //Escriure a l'arxiu
+        String outputFile = "nivell1/src/main/resources/" + fileName + ".txt";
+        try (PrintWriter pw = new PrintWriter(outputFile)) {
+            stockToCSVList.forEach(pw::println);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void printTable(Map<String, List<List<String>>> mapList) {
+        int index = 1;
+
+        if (mapList.containsKey("decoration")) {
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu(€)", "Quantitat", "Material");
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+            for (List<String> value : mapList.get("decoration")) {
+                System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+                index++;
+            }
+            System.out.println();
+        }
+
+        if (mapList.containsKey("flower")) {
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Color");
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+
+            for (List<String> value : mapList.get("flower")) {
+                System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+                index++;
+            }
+            System.out.println();
+        }
+
+        if (mapList.containsKey("tree")) {
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Altura (m)");
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+
+            for (List<String> value : mapList.get("tree")) {
+                System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+                index++;
+            }
+        }
     }
 }
