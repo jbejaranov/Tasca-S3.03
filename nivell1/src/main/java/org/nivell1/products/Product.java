@@ -7,7 +7,6 @@ public abstract class Product {
     private String name;
     private float price;
     private final String id;
-
     private int quantity;
 
     //TODO: cambiar ID para que sea el timestamp
