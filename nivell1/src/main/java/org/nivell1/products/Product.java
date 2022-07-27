@@ -9,7 +9,7 @@ public abstract class Product {
     private final String id;
     private int quantity;
 
-    //TODO: cambiar ID para que sea el timestamp
+    //TODO: eliminar ID
     protected Product(String name, float price, int quantity) {
         id = UUID.randomUUID().toString();
         this.name = name;

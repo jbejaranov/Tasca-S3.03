@@ -1,13 +1,13 @@
 package org.nivell1.service;
 
-import org.nivell1.products.Product;
-import org.nivell1.products.Tree;
+import org.nivell1.utils.ComparadorLlista;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class StoreManager {
 
@@ -50,10 +50,46 @@ public class StoreManager {
     }
 
     public void showStock() {
-        Map<String, List<String>> map = readFromFile("stock");
-        map.values().forEach(System.out::println);
+        List<List<String>> list = readFromFile("stock");
+        ComparadorLlista comparadorLlista = new ComparadorLlista();
+        list.sort(comparadorLlista);
 
-        //TODO: mostrar valores numericos delante de cada producto
+        List<List<String>> listDecoration;
+        List<List<String>> listFlower;
+        List<List<String>> listTree;
+
+        OptionalInt indexFlower = IntStream.range(0, list.size()).filter(i -> "flower".equals(list.get(i).get(0))).findFirst();
+        OptionalInt indexTree = IntStream.range(0, list.size()).filter(i -> "tree".equals(list.get(i).get(0))).findFirst();
+
+        //TODO: tractar Optional
+
+        listDecoration = list.subList(0, indexFlower.getAsInt());
+        listFlower = list.subList(indexFlower.getAsInt(), indexTree.getAsInt());
+        listTree = list.subList(indexTree.getAsInt(), list.size());
+
+        int index = 1;
+        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu(€)", "Quantitat", "Material");
+        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+        for (List<String> value : listDecoration) {
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+            index++;
+        }
+        System.out.println();
+        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Color");
+        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+
+        for (List<String> value : listFlower) {
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+            index++;
+        }
+        System.out.println();
+        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Altura (m)");
+        System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+
+        for (List<String> value : listTree) {
+            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+            index++;
+        }
     }
 
     public void getTotalValue() {
@@ -61,6 +97,12 @@ public class StoreManager {
     }
 
     public void createTicket() {
+
+        showStock();
+
+        List<List<String>> list = readFromFile("stock");
+        ComparadorLlista comparadorLlista = new ComparadorLlista();
+        list.sort(comparadorLlista);
 
         //TODO: crear menú:
         /*
@@ -92,24 +134,25 @@ public class StoreManager {
         //TODO: muestra suma del valor total de los tickets (ventas)
     }
 
-    public Map<String, List<String>> readFromFile(String fileName) {
-        Map<String, List<String>> map = new HashMap<>();
+    public List<List<String>> readFromFile(String fileName) {
+        //TODO: eliminar ultima linea
+        List<List<String>> list = new ArrayList<>();
         String inputFile = "nivell1/src/main/resources/" + fileName + ".txt";
         try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 List<String> listContent = new ArrayList<>();
                 Collections.addAll(listContent, line.split(",")[0],
+                        line.split(",")[1],
                         line.split(",")[2],
                         line.split(",")[3],
-                        line.split(",")[4],
-                        line.split(",")[5]);
-                map.put(line.split(",")[1], listContent);
+                        line.split(",")[4]);
+                list.add(listContent);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return map;
+        return list;
     }
 
     //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.

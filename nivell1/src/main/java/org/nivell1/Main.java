@@ -62,8 +62,8 @@ public class Main {
 
                 case 10 -> {
                     System.out.println(System.getProperty("user.dir"));
-                    Map<String, List<String>> map = StoreManager.getInstance(currentStore).readFromFile("stock");
-                    System.out.println(map);}
+                    List<List<String>> list = StoreManager.getInstance(currentStore).readFromFile("stock");
+                    System.out.println(list);}
 
                 //Sortir del programa
                 case 0 -> System.out.println("Sortint del programa");
