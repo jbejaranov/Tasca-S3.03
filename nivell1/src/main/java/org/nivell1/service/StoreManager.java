@@ -1,5 +1,14 @@
 package org.nivell1.service;
 
+import org.nivell1.products.Product;
+import org.nivell1.products.Tree;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+
 public class StoreManager {
 
     //Singleton de gestió de botigues
@@ -41,7 +50,8 @@ public class StoreManager {
     }
 
     public void showStock() {
-        //TODO: muestra por pantalla el stock buscando el archivo con el nombre de la tienda
+        Map<String, List<String>> map = readFromFile("stock");
+        map.values().forEach(System.out::println);
     }
 
     public void getTotalValue() {
@@ -80,8 +90,24 @@ public class StoreManager {
         //TODO: muestra suma del valor total de los tickets (ventas)
     }
 
-    public void readFromFile() {
-        //TODO: para leer de un fichero (del stock, por ejemplo)
+    public Map<String, List<String>> readFromFile(String fileName) {
+        Map<String, List<String>> map = new HashMap<>();
+        String inputFile = "nivell1/src/main/resources/" + fileName + ".txt";
+        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                List<String> listContent = new ArrayList<>();
+                Collections.addAll(listContent, line.split(",")[0],
+                        line.split(",")[2],
+                        line.split(",")[3],
+                        line.split(",")[4],
+                        line.split(",")[5]);
+                map.put(line.split(",")[1], listContent);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return map;
     }
 
     //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.

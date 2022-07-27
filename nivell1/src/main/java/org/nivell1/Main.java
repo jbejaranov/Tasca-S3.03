@@ -2,6 +2,8 @@ package org.nivell1;
 
 import org.nivell1.service.StoreManager;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
@@ -57,6 +59,11 @@ public class Main {
 
                 //Mostrat total diners vendes
                 case 9 -> StoreManager.getInstance(currentStore).showTotalSales();
+
+                case 10 -> {
+                    System.out.println(System.getProperty("user.dir"));
+                    Map<String, List<String>> map = StoreManager.getInstance(currentStore).readFromFile("stock");
+                    System.out.println(map);}
 
                 //Sortir del programa
                 case 0 -> System.out.println("Sortint del programa");
