@@ -52,6 +52,8 @@ public class StoreManager {
     public void showStock() {
         Map<String, List<String>> map = readFromFile("stock");
         map.values().forEach(System.out::println);
+
+        //TODO: mostrar valores numericos delante de cada producto
     }
 
     public void getTotalValue() {
