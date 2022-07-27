@@ -53,7 +53,7 @@ public class StoreManager {
     }
 
     private List<List<String>> getOrderedProductList() {
-        List<List<String>> list = readFromFile("stock");
+        List<List<String>> list = readStockFromFile("stock");
         ComparadorLlista comparadorLlista = new ComparadorLlista();
         list.sort(comparadorLlista);
         return list;
@@ -84,7 +84,7 @@ public class StoreManager {
     }
 
     public void getTotalValue() {
-        List<List<String>> list = readFromFile("stock");
+        List<List<String>> list = readStockFromFile("stock");
         double valor = list.stream()
                 .map(element -> Double.parseDouble(element.get(2)) * Double.parseDouble(element.get(3)))
                 .reduce(0d, Double::sum);
@@ -120,7 +120,7 @@ public class StoreManager {
         //TODO: scanner per demanar quin producte esborrar. imaginem que és el número 1
         //stock.remove(0);
         //TODO: canviar nom arxiu on escriu (currentStore)
-        writeToFile(stock, "stock2");
+        writeStockToFile(stock, "stock2");
     }
 
     private void addToHistory() {
@@ -135,7 +135,7 @@ public class StoreManager {
         //TODO: muestra suma del valor total de los tickets (ventas)
     }
 
-    public List<List<String>> readFromFile(String fileName) {
+    public List<List<String>> readStockFromFile(String fileName) {
         String inputFile = "nivell1/src/main/resources/" + fileName + ".txt";
         List<List<String>> listOfLists = new ArrayList<>();
 
@@ -153,7 +153,7 @@ public class StoreManager {
 
     //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.
 
-    public void writeToFile(List<List<String>> stock, String fileName) {
+    public void writeStockToFile(List<List<String>> stock, String fileName) {
         //Convertir a llista de strings preparats pel csv
         List<String> stockToCSVList = stock.stream()
                 .map(subList -> String.join(",", subList))
