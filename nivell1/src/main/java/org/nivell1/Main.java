@@ -63,7 +63,7 @@ public class Main {
                 //Mostrat total diners vendes
                 case 10 -> StoreManager.getInstance(currentStore).showTotalSales(); //TODO:Juan
 
-                //Proves (ELIMINAR!!)
+                //Proves (TODO: ELIMINAR!!)
 //                case 11 ->
 
                 //Sortir del programa
@@ -98,7 +98,7 @@ public class Main {
 
     public static String readName() {
         //Arreglar
-        System.out.println("Intro name store: ");
+        System.out.println("Introdueix el nom de la nova botiga: ");
         return scanner.nextLine();
     }
 }

@@ -108,7 +108,7 @@ public class StoreManager {
     public List<String> addProductQuestions() {
         List<String> questionsList = new ArrayList<>();
 
-        System.out.println("Quin producte vol introduïr? (Escriu el nom en anglès) ");
+        System.out.println("Quin producte voleu introduïr? (Escriviu el nom en anglès) ");
         String product = scanner.nextLine();
 
         System.out.println("Introdueix el nom de " + product);
@@ -120,29 +120,23 @@ public class StoreManager {
         System.out.println("Introdueix la quantitat de " + product);
         String quantity = scanner.nextLine();
 
-        String property = "";
-
         if (product.equalsIgnoreCase("tree")) {
-
             System.out.println("Introdueix l'altura de l'arbre: ");
-            property = scanner.nextLine();
-
         } else if (product.equalsIgnoreCase("flower")) {
-
             System.out.println("Introdueix el color de les flors: ");
-            property = scanner.nextLine();
-
         } else if (product.equalsIgnoreCase("decoration")) {
-
             System.out.println("Introdueix el tipus de material: ");
-            property = scanner.nextLine();
         }
 
-        questionsList.add(product);
-        questionsList.add(name);
-        questionsList.add(price);
-        questionsList.add(quantity);
-        questionsList.add(property);
+        String property = scanner.nextLine();
+
+//        questionsList.add(product);
+//        questionsList.add(name);
+//        questionsList.add(price);
+//        questionsList.add(quantity);
+//        questionsList.add(property);
+
+        Collections.addAll(questionsList, product, name, price, quantity, property);
 
         return questionsList;
     }
@@ -151,8 +145,10 @@ public class StoreManager {
         showStock();
         List<List<String>> stock = getOrderedProductList();
 
-        System.out.println("Quin producte vol eliminar");
+        System.out.println("Introduïu número del producte a eliminar:");
         int removeProduct = scanner.nextInt();
+        scanner.nextLine();
+
         stock.remove(removeProduct - 1);
 
         //TODO: canviar nom arxiu on escriu (currentStore)
@@ -168,20 +164,24 @@ public class StoreManager {
     }
 
     public void showStock() {
+        //Obtenim llista de productes ordenada
         List<List<String>> list = getOrderedProductList();
+        //Creem un mapa amb llistes de productes classificades per tipus
         Map<String, List<List<String>>> mapList = list.stream()
                 .collect(Collectors.groupingBy(i -> i.get(0)));
-
+        //Mostrem els productes per pantalla
         printTable(mapList);
     }
 
     public void getTotalValue() {
         //TODO: canviar nom arxiu input
+        //Obtenim la llista de productes al stock
         List<List<String>> list = readProductsFromFile("stock");
+        //Iterem sobre la llisa de productes i multipliquem preu (índex 2) per quantitat (índex 3)
         double valor = list.stream()
                 .map(element -> Double.parseDouble(element.get(2)) * Double.parseDouble(element.get(3)))
                 .reduce(0d, Double::sum);
-
+        //Format amb 2 decimals
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         System.out.println("El valor total dels productes de la botiga és: " + decimalFormat.format(valor) + " euros");
     }
