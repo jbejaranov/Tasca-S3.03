@@ -72,6 +72,7 @@ public class StoreManager {
         List<List<String>> productAlreadyExists = stock.stream()
                 .filter(subList -> newProduct.get(0).equals(subList.get(0)) &&
                         newProduct.get(1).equals(subList.get(1)) &&
+                        newProduct.get(1).equals(subList.get(2)) &&
                         newProduct.get(4).equals(subList.get(4))).toList();
 
         //Si ja existeix
