@@ -130,7 +130,12 @@ public class StoreManager {
 
     public void deleteProduct() {
         //TODO: borra producto por número en pantalla
-        deleteFromStock();
+        showStock();
+        List<List<String>> stock = getOrderedProductList();
+        //TODO: scanner per demanar quin producte esborrar. imaginem que és el número 1
+        //stock.remove(0);
+        //TODO: canviar nom arxiu on escriu (currentStore)
+        writeProductsToFile(stock, "stock2");
     }
 
     private List<List<String>> getOrderedProductList() {
@@ -194,15 +199,6 @@ public class StoreManager {
         int newStock = 9; //Nova quantitat
         stock.get(lineToUpdate).set(3, String.valueOf(newStock));
         //Seguim demanant... Quan 0:
-        writeProductsToFile(stock, "stock2");
-    }
-
-    private void deleteFromStock() {
-        showStock();
-        List<List<String>> stock = getOrderedProductList();
-        //TODO: scanner per demanar quin producte esborrar. imaginem que és el número 1
-        //stock.remove(0);
-        //TODO: canviar nom arxiu on escriu (currentStore)
         writeProductsToFile(stock, "stock2");
     }
 
