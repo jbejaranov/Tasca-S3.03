@@ -8,7 +8,7 @@ import java.util.Scanner;
 
 public class Main {
     /*
-    TODO: toString a products
+    TODO: documentar mètodes
 
      */
 
@@ -42,7 +42,7 @@ public class Main {
                 //Introduir producte a botiga
                 case 3 -> StoreManager.getInstance(currentStore).addProduct();
 
-                //Actualitzar quantitat de producte a botiga
+                //Actualitzar producte a botiga
                 case 4 -> StoreManager.getInstance(currentStore).updateStock();
 
                 //Esborrar producte de botiga
@@ -75,25 +75,22 @@ public class Main {
     }
 
     public static void printMenu() {
-
-
-        //TODO: cambiar menú (poner opciones)
-
         System.out.println("""
                 -------------------
                 Escolliu una opció:
-                1: Introduir una botiga
-                2: Select store...
-                3: 
-                4: 
-                5: 
-                6: 
-                7: 
-                8:
+                1: Introduir una nova botiga
+                2: Seleccionar la botiga en ús
+                3: Afegir un producte a una botiga
+                4: Actualitzar un producte
+                5: Esborrar un producte
+                6: Mostrar stock total de la botiga
+                7: Mostrar valor total del stock de la botiga
+                8: Crear un nou tiquet de compra
+                9: Mostrar historial de vendes
+                10: Mostrar total guanyat amb les vendes
                 0: Sortir
                 ------------------
                 """);
-
     }
 
     public static String readName() {

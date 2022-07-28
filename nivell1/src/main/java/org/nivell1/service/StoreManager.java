@@ -131,12 +131,6 @@ public class StoreManager {
 
         String property = scanner.nextLine();
 
-//        questionsList.add(product);
-//        questionsList.add(name);
-//        questionsList.add(price);
-//        questionsList.add(quantity);
-//        questionsList.add(property);
-
         Collections.addAll(questionsList, product, name, price, quantity, property);
 
         return questionsList;
