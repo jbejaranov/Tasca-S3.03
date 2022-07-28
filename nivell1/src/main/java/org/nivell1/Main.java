@@ -11,12 +11,8 @@ public class Main {
     TODO: documentar mètodes
 
      */
-
     private static String currentStore;
     private static final Scanner scanner = new Scanner(System.in);
-
-    //Idea: selecciona botiga i fes totes operacions a aquesta botiga. mètode al menu per canviar de botiga
-    //En comptes de demanar la botiga cada vegada
 
     public static void main(String[] args) {
 
