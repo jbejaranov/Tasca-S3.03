@@ -130,8 +130,15 @@ public class StoreManager {
 
     public void deleteProduct() {
         //TODO: borra producto por número en pantalla
+        Scanner scan = new Scanner(System.in);
+
         showStock();
         List<List<String>> stock = getOrderedProductList();
+
+        System.out.println("Quin producte vol eliminar");
+        int removeProduct = scan.nextInt();
+        stock.remove(removeProduct-1);
+
         //TODO: scanner per demanar quin producte esborrar. imaginem que és el número 1
         //stock.remove(0);
         //TODO: canviar nom arxiu on escriu (currentStore)
