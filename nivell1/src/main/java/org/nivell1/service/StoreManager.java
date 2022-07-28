@@ -71,43 +71,29 @@ public class StoreManager {
         String fileName = "nivell1/src/main/resources/" + "prova" + ".txt";
         File florist = new File(fileName);
 
-        ArrayList<String> questionsList = questions();
+        List<String> questionsList = questions();
 
-        try (FileOutputStream file = new FileOutputStream(fileName, true);
-             OutputStreamWriter out = new OutputStreamWriter(file);
-             BufferedWriter bw = new BufferedWriter(out);
-             PrintWriter writer = new PrintWriter(bw)) {
+        //TODO: mirar si ja existeix
+        String toCSV = String.join(",", questionsList);
 
-            writer.print(questionsList.get(0));
-            writer.print(",");
-            writer.print(questionsList.get(1));
-            writer.print(",");
-            writer.print(questionsList.get(2));
-            writer.print(",");
-            writer.print(questionsList.get(3));
-            writer.print(",");
-            writer.print(questionsList.get(4));
-            writer.println();
-
+        try (PrintWriter pw = new PrintWriter(fileName)) {
+            pw.println(toCSV);
             System.out.println("Producte afegit");
-
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public ArrayList<String> questions() {
+    public List<String> questions() {
         Scanner scan = new Scanner(System.in);
 
-        ArrayList<String> questionsList = new ArrayList<>();
+        List<String> questionsList = new ArrayList<>();
 
-        System.out.println("Quin producte vol introduïr? ");
+        System.out.println("Quin producte vol introduïr? (Escriu el nom en anglès) ");
         String product = scan.nextLine();
 
         System.out.println("Introdueix el nom de " + product);
         String name = scan.nextLine();
-
-        //TODO: mirar si ja existeix
 
         System.out.println("Introdueix el preu de " + product);
         String price = scan.nextLine();
@@ -156,22 +142,6 @@ public class StoreManager {
 
     public void showStock() {
         List<List<String>> list = getOrderedProductList();
-
-//        List<List<String>> listDecoration;
-//        List<List<String>> listFlower;
-//        List<List<String>> listTree;
-//
-//        OptionalInt indexFlower = IntStream.range(0, list.size()).filter(i -> "flower".equals(list.get(i).get(0))).findFirst();
-//        OptionalInt indexTree = IntStream.range(0, list.size()).filter(i -> "tree".equals(list.get(i).get(0))).findFirst();
-//
-//        //TODO: tractar Optional
-//
-//        listDecoration = list.subList(0, indexFlower.getAsInt());
-//        listFlower = list.subList(indexFlower.getAsInt(), indexTree.getAsInt());
-//        listTree = list.subList(indexTree.getAsInt(), list.size());
-//
-//        printTable(listDecoration, listFlower, listTree);
-
         Map<String, List<List<String>>> mapList = list.stream()
                 .collect(Collectors.groupingBy(i -> i.get(0)));
 
@@ -266,11 +236,15 @@ public class StoreManager {
 
     //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.
 
-    public void writeProductsToFile(List<List<String>> stock, String fileName) {
-        //Convertir a llista de strings preparats pel csv
-        List<String> stockToCSVList = stock.stream()
+    private List<String> convertToCSVStringList(List<List<String>> list) {
+        return list.stream()
                 .map(subList -> String.join(",", subList))
                 .toList();
+    }
+
+    public void writeProductsToFile(List<List<String>> productList, String fileName) {
+        //Convertir a llista de strings preparats pel csv
+        List<String> stockToCSVList = convertToCSVStringList(productList);
 
         //Escriure a l'arxiu
         String outputFile = "nivell1/src/main/resources/" + fileName + ".txt";
