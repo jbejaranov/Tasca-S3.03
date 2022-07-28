@@ -256,16 +256,36 @@ public class StoreManager {
     //TODO: mètode per canviar número de stock
 
     public void updateStock() {
-        showStock();
         List<List<String>> stock = getOrderedProductList();
-        //TODO: scanner per demanar què volem canviar -> actualitzar
+        showStock();
 
-        //TODO: menú per triar quin stock actualitzar. Suposem que l'1:
-        int lineToUpdate = 0;
-        int newStock = 9; //Nova quantitat
-        stock.get(lineToUpdate).set(3, String.valueOf(newStock));
-        //Seguim demanant... Quan 0:
-        writeProductsToFile(stock, "stock2");
+        System.out.println("Escolliu quin producte voleu actualitzar:");
+
+        int productNum = scanner.nextInt() - 1;
+        scanner.nextLine();
+
+        List<String> product = new ArrayList<>(stock.get(productNum ));
+
+        System.out.println("Escolliu la propietat del producte que voleu canviar:");
+        System.out.println("""
+                1 - Nom
+                2 - Preu
+                3 - Quantitat
+                4 - Material/Color/Alçada
+                """);
+
+        int property = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.println("Introduïu el nou valor:");
+
+        String newValue = scanner.nextLine();
+        product.set(property, newValue);
+
+        stock.set(productNum, product);
+        System.out.println("Producte actualizat");
+
+        writeProductsToFile(stock, "stock");
     }
 
     private void addToHistory() {
