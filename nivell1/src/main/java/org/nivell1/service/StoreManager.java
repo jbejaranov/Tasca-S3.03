@@ -1,10 +1,9 @@
 package org.nivell1.service;
 
+import org.nivell1.stores.Ticket;
 import org.nivell1.utils.ComparadorLlista;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
@@ -37,14 +36,110 @@ public class StoreManager {
     }
 
     public void addStore() {
-        //TODO: crea arxchivo stock con nombre tienda
+        // TODO: crea arxchivo stock con nombre tienda
+
+        String fileName = "nivell1/src/main/resources/" + storeName + ".txt";
+        File florist = new File(fileName);
+
+        try (FileOutputStream file = new FileOutputStream(fileName, true);
+             OutputStreamWriter out = new OutputStreamWriter(file);
+             BufferedWriter bw = new BufferedWriter(out);
+             PrintWriter writer = new PrintWriter(bw)) {
+
+        } catch (IOException ioe) {
+
+            ioe.printStackTrace();
+        }
+
+        if (florist.exists()) {
+            System.out.println("La floristeria que vol introduir ja es troba registrada. ");
+        } else {
+            //TODO: crear arxiu
+        }
+
     }
 
     public void addProduct() {
-        //TODO: añade producto a stock de tienda (busca archivo de tienda con este nombre)
-        //TODO: si ya existe producto, añadir a la cantidad?
-        //TODO: para implementar la parte de arriba, habria que hacer un equals de todos los campos del producto menos el ID
-        //(p ej, del arbol -> si el nombre, precio y altura es igual)
+        // TODO: añade producto a stock de tienda (busca archivo de tienda con este
+        // nombre)
+        // TODO: si ya existe producto, añadir a la cantidad?
+        // TODO: para implementar la parte de arriba, habria que hacer un equals de
+        // todos los campos del producto menos el ID
+        // (p ej, del arbol -> si el nombre, precio y altura es igual)
+
+        //String fileName = "nivell1/src/main/resources/" + storeName + ".txt";
+        String fileName = "nivell1/src/main/resources/" + "prova" + ".txt";
+        File florist = new File(fileName);
+
+        ArrayList<String> questionsList = questions();
+
+        try (FileOutputStream file = new FileOutputStream(fileName, true);
+             OutputStreamWriter out = new OutputStreamWriter(file);
+             BufferedWriter bw = new BufferedWriter(out);
+             PrintWriter writer = new PrintWriter(bw)) {
+
+            writer.print(questionsList.get(0));
+            writer.print(",");
+            writer.print(questionsList.get(1));
+            writer.print(",");
+            writer.print(questionsList.get(2));
+            writer.print(",");
+            writer.print(questionsList.get(3));
+            writer.print(",");
+            writer.print(questionsList.get(4));
+            writer.println();
+
+            System.out.println("Producte afegit");
+
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
+    }
+
+    public ArrayList<String> questions() {
+        Scanner scan = new Scanner(System.in);
+
+        ArrayList<String> questionsList = new ArrayList<>();
+
+        System.out.println("Quin producte vol introduïr? ");
+        String product = scan.nextLine();
+
+        System.out.println("Introdueix el nom de " + product);
+        String name = scan.nextLine();
+
+        //TODO: mirar si ja existeix
+
+        System.out.println("Introdueix el preu de " + product);
+        String price = scan.nextLine();
+
+        System.out.println("Introdueix la quantitat de " + product);
+        String quantity = scan.nextLine();
+
+        String property = "";
+
+        if (product.equalsIgnoreCase("tree")) {
+
+            System.out.println("Introdueix l'altura de l'arbre: ");
+            property = scan.nextLine();
+
+        } else if (product.equalsIgnoreCase("flower")) {
+
+            System.out.println("Introdueix el color de les flors: ");
+            property = scan.nextLine();
+
+        } else if (product.equalsIgnoreCase("decoration")) {
+
+            System.out.println("Introdueix el tipus de material: ");
+            property = scan.nextLine();
+        }
+
+        questionsList.add(product);
+        questionsList.add(name);
+        questionsList.add(price);
+        questionsList.add(quantity);
+        questionsList.add(property);
+
+        return questionsList;
     }
 
     public void deleteProduct() {
@@ -53,7 +148,7 @@ public class StoreManager {
     }
 
     private List<List<String>> getOrderedProductList() {
-        List<List<String>> list = readStockFromFile("stock");
+        List<List<String>> list = readProductsFromFile("stock");
         ComparadorLlista comparadorLlista = new ComparadorLlista();
         list.sort(comparadorLlista);
         return list;
@@ -84,7 +179,7 @@ public class StoreManager {
     }
 
     public void getTotalValue() {
-        List<List<String>> list = readStockFromFile("stock");
+        List<List<String>> list = readProductsFromFile("stock");
         double valor = list.stream()
                 .map(element -> Double.parseDouble(element.get(2)) * Double.parseDouble(element.get(3)))
                 .reduce(0d, Double::sum);
@@ -102,9 +197,15 @@ public class StoreManager {
         /*
         0. Mostrar stock
         1. Menu cliente: 1) elegir producto (viendo stock), 2) ver todas compras, 0) salir
-        2. cada vez que elige prod, eliminar de stock, add a ticket
+        2. cada vez que elige prod, eliminar o actualizar de stock, add a ticket
         3. cuando sale, se crea timestamp y se guarda a historial
          */
+
+        //Assumim llista de productes:
+
+
+        Ticket ticket = new Ticket(stock); //TODO: CANVIAR!!
+        writeProductsToFile(stock, "Ticket_" + storeName + "_" + ticket.getId());
 
         //List<Product> ->TIcket ticket = new Ticket(list)
         //ticket.getid -> crear arxiu ticket_id o ticket_timestamp
@@ -114,13 +215,25 @@ public class StoreManager {
 
     //TODO: mètode per canviar número de stock
 
+    public void updateStock() {
+        showStock();
+        List<List<String>> stock = getOrderedProductList();
+
+        //TODO: menú per triar quin stock actualitzar. Suposem que l'1:
+        int lineToUpdate = 0;
+        int newStock = 9; //Nova quantitat
+        stock.get(lineToUpdate).set(3, String.valueOf(newStock));
+        //Seguim demanant... Quan 0:
+        writeProductsToFile(stock, "stock2");
+    }
+
     private void deleteFromStock() {
         showStock();
         List<List<String>> stock = getOrderedProductList();
         //TODO: scanner per demanar quin producte esborrar. imaginem que és el número 1
         //stock.remove(0);
         //TODO: canviar nom arxiu on escriu (currentStore)
-        writeStockToFile(stock, "stock2");
+        writeProductsToFile(stock, "stock2");
     }
 
     private void addToHistory() {
@@ -135,7 +248,7 @@ public class StoreManager {
         //TODO: muestra suma del valor total de los tickets (ventas)
     }
 
-    public List<List<String>> readStockFromFile(String fileName) {
+    public List<List<String>> readProductsFromFile(String fileName) {
         String inputFile = "nivell1/src/main/resources/" + fileName + ".txt";
         List<List<String>> listOfLists = new ArrayList<>();
 
@@ -153,7 +266,7 @@ public class StoreManager {
 
     //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.
 
-    public void writeStockToFile(List<List<String>> stock, String fileName) {
+    public void writeProductsToFile(List<List<String>> stock, String fileName) {
         //Convertir a llista de strings preparats pel csv
         List<String> stockToCSVList = stock.stream()
                 .map(subList -> String.join(",", subList))

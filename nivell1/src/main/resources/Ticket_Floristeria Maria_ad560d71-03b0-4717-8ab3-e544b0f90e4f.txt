@@ -1,4 +1,4 @@
-decoration,maceta,0.99,9,plastico
+decoration,maceta,0.99,5,plastico
 decoration,mesa,12.99,2,madera
 flower,rosa,1.49,21,blanca
 flower,rosa,1.39,14,roja

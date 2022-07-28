@@ -42,26 +42,29 @@ public class Main {
                 //Introduir producte a botiga
                 case 3 -> StoreManager.getInstance(currentStore).addProduct();
 
+                //Actualitzar quantitat de producte a botiga
+                case 4 -> StoreManager.getInstance(currentStore).updateStock();
+
                 //Esborrar producte de botiga
-                case 4 -> StoreManager.getInstance(currentStore).deleteProduct();
+                case 5 -> StoreManager.getInstance(currentStore).deleteProduct();
 
                 //Mostrar stock amb quantitats
-                case 5 -> StoreManager.getInstance(currentStore).showStock();
+                case 6 -> StoreManager.getInstance(currentStore).showStock();
 
                 //Mostrar valor total
-                case 6 -> StoreManager.getInstance(currentStore).getTotalValue();
+                case 7 -> StoreManager.getInstance(currentStore).getTotalValue();
 
                 //Crear ticket
-                case 7 -> StoreManager.getInstance(currentStore).createTicket();
+                case 8 -> StoreManager.getInstance(currentStore).createTicket();
 
                 //Mostrar vendes (historial)
-                case 8 -> StoreManager.getInstance(currentStore).showHistory();
+                case 9 -> StoreManager.getInstance(currentStore).showHistory();
 
                 //Mostrat total diners vendes
-                case 9 -> StoreManager.getInstance(currentStore).showTotalSales();
+                case 10 -> StoreManager.getInstance(currentStore).showTotalSales();
 
                 //Proves (ELIMINAR!!)
-//                case 10 ->
+//                case 11 ->
 
                 //Sortir del programa
                 case 0 -> System.out.println("Sortint del programa");
