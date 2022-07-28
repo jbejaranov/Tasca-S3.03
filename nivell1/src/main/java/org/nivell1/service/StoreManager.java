@@ -71,10 +71,19 @@ public class StoreManager {
         String fileName = "nivell1/src/main/resources/" + "prova" + ".txt";
         File florist = new File(fileName);
 
-        List<String> questionsList = questions();
+        List<String> newProduct = questions();
 
         //TODO: mirar si ja existeix
-        String toCSV = String.join(",", questionsList);
+        List<List<String>> stock = getOrderedProductList();
+        List<List<String>> productAlreadyExists = stock.stream()
+                .filter(subList -> newProduct.get(0).equals(subList.get(0)) &&
+                        newProduct.get(1).equals(subList.get(1)) &&
+                        newProduct.get(4).equals(subList.get(4))).toList();
+        if (!productAlreadyExists.isEmpty()) {
+            //
+        }
+
+        String toCSV = String.join(",", newProduct);
 
         try (PrintWriter pw = new PrintWriter(fileName)) {
             pw.println(toCSV);
@@ -82,6 +91,10 @@ public class StoreManager {
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
+
+        //Desa-ho de manera ordenada
+        List<List<String>> orderedList = getOrderedProductList();
+        writeProductsToFile(orderedList, "stock");
     }
 
     public List<String> questions() {
@@ -139,6 +152,7 @@ public class StoreManager {
     }
 
     private List<List<String>> getOrderedProductList() {
+        //TODO: canviar nom arxiu
         List<List<String>> list = readProductsFromFile("stock");
         ComparadorLlista comparadorLlista = new ComparadorLlista();
         list.sort(comparadorLlista);
