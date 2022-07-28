@@ -1,6 +1,0 @@
-decoration,maceta,0.99,5,plastico
-decoration,mesa,12.99,2,madera
-flower,rosa,1.49,21,blanca
-flower,rosa,1.39,14,roja
-tree,manzano,20.99,7,1.5
-tree,nogal,39.99,3,2.5

@@ -3,6 +3,7 @@ package org.nivell1.service;
 import org.nivell1.stores.Ticket;
 import org.nivell1.utils.ComparadorLlista;
 
+import javax.sound.midi.Soundbank;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -188,27 +189,68 @@ public class StoreManager {
 
     public void createTicket() {
 
-        showStock();
         List<List<String>> stock = getOrderedProductList();
 
-        //TODO: crear menú:
-        /*
-        0. Mostrar stock
-        1. Menu cliente: 1) elegir producto (viendo stock), 2) ver todas compras, 0) salir
-        2. cada vez que elige prod, eliminar o actualizar de stock, add a ticket
-        3. cuando sale, se crea timestamp y se guarda a historial
-         */
+        List<List<String>> productesTiquet = new ArrayList<>();
 
-        //Assumim llista de productes:
+        int select;
 
+        do {
+            System.out.println("""
+                    -------------------
+                    Escolliu una opció:
+                    1: Escollir producte
+                    2: Veure tots els productes seleccionats
+                    0: Acabar amb la compra i generar tiquet
+                    ------------------
+                    """);
 
-        Ticket ticket = new Ticket(stock); //TODO: CANVIAR!!
-        writeProductsToFile(stock, "Ticket_" + storeName + "_" + ticket.getId());
+            select = scanner.nextInt();
+            scanner.nextLine();
 
-        //List<Product> ->TIcket ticket = new Ticket(list)
-        //ticket.getid -> crear arxiu ticket_id o ticket_timestamp
+            switch (select) {
+                //Escollir un producte
+                case 1 -> {
+                    showStock();
 
-        //TODO: mirar tb que guarde el valor total. Tb se puede mostrar al cliente en finalizar la compra (cuando pulsa 0)
+                    System.out.println("Introduïu número del producte que desitgeu comprar:");
+                    int numProducte = scanner.nextInt() - 1;
+                    scanner.nextLine();
+
+                    System.out.println("Introduïu quantitat de productes a posar al carro:");
+                    int quantitatProducte = scanner.nextInt();
+                    scanner.nextLine();
+
+                    int quantitatStock = Integer.parseInt(stock.get(numProducte).get(3));
+
+                    if (quantitatProducte == quantitatStock) {
+                        stock.remove(numProducte);
+                        productesTiquet.add(stock.get(numProducte));
+                    } else if (quantitatProducte < quantitatStock) {
+                        List<String> addToTiquet = new ArrayList<>(stock.get(numProducte));
+                        addToTiquet.set(3, String.valueOf(quantitatProducte));
+                        productesTiquet.add(addToTiquet);
+
+                        stock.get(numProducte).set(3, String.valueOf(quantitatStock - quantitatProducte));
+                        System.out.println("Producte afegit al tiquet");
+                        //TODO: afegir a historial
+                    } else {
+                        System.out.println("No podeu adquirir més articles dels que hi ha disponibles, torneu a provar");
+                    }
+                }
+
+//              //Veure tots els productes ja seleccionats
+                case 2 -> productesTiquet.forEach(System.out::println);
+
+                //Acabar el tiquet
+                case 0 -> System.out.println("Processant la compra");
+            }
+        } while (select != 0);
+
+        Ticket ticket = new Ticket(productesTiquet);
+
+        writeProductsToFile(stock, "stock");
+        writeProductsToFile(productesTiquet, "Ticket_" + storeName + "_" + ticket.getId());
     }
 
     //TODO: mètode per canviar número de stock
@@ -244,10 +286,10 @@ public class StoreManager {
 
         try {
             List<String> lines = Files.readAllLines(Paths.get(inputFile));
-            lines.stream().filter(line -> !line.isEmpty()).toList().forEach(line -> {
-                List<String> innerList = new ArrayList<>(Arrays.asList(line.split(",")));
-                listOfLists.add(innerList);
-            });
+            lines.stream()
+                    .filter(line -> !line.isEmpty())
+                    .toList()
+                    .forEach(line -> listOfLists.add(convertCSVToStringList(line)));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -256,15 +298,19 @@ public class StoreManager {
 
     //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.
 
-    private List<String> convertToCSVStringList(List<List<String>> list) {
+    private List<String> convertToCSVList(List<List<String>> list) {
         return list.stream()
                 .map(subList -> String.join(",", subList))
                 .toList();
     }
 
+    private List<String> convertCSVToStringList(String csvString) {
+        return new ArrayList<>(Arrays.asList(csvString.split(",")));
+    }
+
     public void writeProductsToFile(List<List<String>> productList, String fileName) {
         //Convertir a llista de strings preparats pel csv
-        List<String> stockToCSVList = convertToCSVStringList(productList);
+        List<String> stockToCSVList = convertToCSVList(productList);
 
         //Escriure a l'arxiu
         String outputFile = "nivell1/src/main/resources/" + fileName + ".txt";
