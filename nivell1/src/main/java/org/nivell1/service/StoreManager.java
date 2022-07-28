@@ -79,22 +79,32 @@ public class StoreManager {
                 .filter(subList -> newProduct.get(0).equals(subList.get(0)) &&
                         newProduct.get(1).equals(subList.get(1)) &&
                         newProduct.get(4).equals(subList.get(4))).toList();
+
         if (!productAlreadyExists.isEmpty()) {
-            //
+            List<String> productAlreadyExistsFlat = productAlreadyExists.stream().flatMap(List::stream).toList();
+            int indexOf = stock.indexOf(productAlreadyExistsFlat);
+            newProduct.set(3, String.valueOf(Integer.parseInt(productAlreadyExistsFlat.get(3)) +
+                            Integer.parseInt(newProduct.get(3))));
+            System.out.println(newProduct);
+            stock.set(indexOf, newProduct);
+            writeProductsToFile(stock, "stock");
+            System.out.println("Actualitzada quantitat de productes");
+        } else {
+            String toCSV = String.join(",", newProduct);
+
+            try (PrintWriter pw = new PrintWriter(fileName)) {
+                pw.println(toCSV);
+                System.out.println("Producte afegit");
+
+                //Desa-ho de manera ordenada
+                List<List<String>> orderedList = getOrderedProductList();
+                writeProductsToFile(orderedList, "stock");
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
 
-        String toCSV = String.join(",", newProduct);
 
-        try (PrintWriter pw = new PrintWriter(fileName)) {
-            pw.println(toCSV);
-            System.out.println("Producte afegit");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        //Desa-ho de manera ordenada
-        List<List<String>> orderedList = getOrderedProductList();
-        writeProductsToFile(orderedList, "stock");
     }
 
     public List<String> questions() {
