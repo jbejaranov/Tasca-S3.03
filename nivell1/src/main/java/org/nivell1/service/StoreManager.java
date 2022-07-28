@@ -60,38 +60,39 @@ public class StoreManager {
     }
 
     public void addProduct() {
-        // TODO: añade producto a stock de tienda (busca archivo de tienda con este
-        // nombre)
-        // TODO: si ya existe producto, añadir a la cantidad?
-        // TODO: para implementar la parte de arriba, habria que hacer un equals de
-        // todos los campos del producto menos el ID
-        // (p ej, del arbol -> si el nombre, precio y altura es igual)
-
+        //TODO: canviar a storeName
         //String fileName = "nivell1/src/main/resources/" + storeName + ".txt";
         String fileName = "nivell1/src/main/resources/" + "prova" + ".txt";
         File florist = new File(fileName);
 
-        List<String> newProduct = questions();
+        List<String> newProduct = addProductQuestions();
 
-        //TODO: mirar si ja existeix
+        //Mirar si un producte ja existeix
         List<List<String>> stock = getOrderedProductList();
         List<List<String>> productAlreadyExists = stock.stream()
                 .filter(subList -> newProduct.get(0).equals(subList.get(0)) &&
                         newProduct.get(1).equals(subList.get(1)) &&
                         newProduct.get(4).equals(subList.get(4))).toList();
 
+        //Si ja existeix
         if (!productAlreadyExists.isEmpty()) {
+            //Fes flat la llista
             List<String> productAlreadyExistsFlat = productAlreadyExists.stream().flatMap(List::stream).toList();
+            //Troba l'índex
             int indexOf = stock.indexOf(productAlreadyExistsFlat);
+            //Suma la quantitat de productes antiga i la nova
             newProduct.set(3, String.valueOf(Integer.parseInt(productAlreadyExistsFlat.get(3)) +
                             Integer.parseInt(newProduct.get(3))));
-            System.out.println(newProduct);
+            //Actualitza les quantitats
             stock.set(indexOf, newProduct);
+            //Desa tot el stock de nou
             writeProductsToFile(stock, "stock");
             System.out.println("Actualitzada quantitat de productes");
         } else {
+            //Si no existeix:
+            //Converteix a format csv
             String toCSV = String.join(",", newProduct);
-
+            //Escriu l'arxiu
             try (PrintWriter pw = new PrintWriter(fileName)) {
                 pw.println(toCSV);
                 System.out.println("Producte afegit");
@@ -103,11 +104,9 @@ public class StoreManager {
                 e.printStackTrace();
             }
         }
-
-
     }
 
-    public List<String> questions() {
+    public List<String> addProductQuestions() {
         Scanner scan = new Scanner(System.in);
 
         List<String> questionsList = new ArrayList<>();
