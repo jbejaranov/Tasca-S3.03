@@ -17,6 +17,8 @@ public class StoreManager {
     private static StoreManager instance;
     private String storeName;
 
+    private static final Scanner scanner = new Scanner(System.in);
+
     //Private constructor
     private StoreManager() {
 
@@ -104,38 +106,36 @@ public class StoreManager {
     }
 
     public List<String> addProductQuestions() {
-        Scanner scan = new Scanner(System.in);
-
         List<String> questionsList = new ArrayList<>();
 
         System.out.println("Quin producte vol introduïr? (Escriu el nom en anglès) ");
-        String product = scan.nextLine();
+        String product = scanner.nextLine();
 
         System.out.println("Introdueix el nom de " + product);
-        String name = scan.nextLine();
+        String name = scanner.nextLine();
 
         System.out.println("Introdueix el preu de " + product);
-        String price = scan.nextLine();
+        String price = scanner.nextLine();
 
         System.out.println("Introdueix la quantitat de " + product);
-        String quantity = scan.nextLine();
+        String quantity = scanner.nextLine();
 
         String property = "";
 
         if (product.equalsIgnoreCase("tree")) {
 
             System.out.println("Introdueix l'altura de l'arbre: ");
-            property = scan.nextLine();
+            property = scanner.nextLine();
 
         } else if (product.equalsIgnoreCase("flower")) {
 
             System.out.println("Introdueix el color de les flors: ");
-            property = scan.nextLine();
+            property = scanner.nextLine();
 
         } else if (product.equalsIgnoreCase("decoration")) {
 
             System.out.println("Introdueix el tipus de material: ");
-            property = scan.nextLine();
+            property = scanner.nextLine();
         }
 
         questionsList.add(product);
@@ -148,18 +148,13 @@ public class StoreManager {
     }
 
     public void deleteProduct() {
-        //TODO: borra producto por número en pantalla
-        Scanner scan = new Scanner(System.in);
-
         showStock();
         List<List<String>> stock = getOrderedProductList();
 
         System.out.println("Quin producte vol eliminar");
-        int removeProduct = scan.nextInt();
+        int removeProduct = scanner.nextInt();
         stock.remove(removeProduct - 1);
 
-        //TODO: scanner per demanar quin producte esborrar. imaginem que és el número 1
-        //stock.remove(0);
         //TODO: canviar nom arxiu on escriu (currentStore)
         writeProductsToFile(stock, "stock2");
     }
@@ -181,6 +176,7 @@ public class StoreManager {
     }
 
     public void getTotalValue() {
+        //TODO: canviar nom arxiu input
         List<List<String>> list = readProductsFromFile("stock");
         double valor = list.stream()
                 .map(element -> Double.parseDouble(element.get(2)) * Double.parseDouble(element.get(3)))
@@ -220,6 +216,7 @@ public class StoreManager {
     public void updateStock() {
         showStock();
         List<List<String>> stock = getOrderedProductList();
+        //TODO: scanner per demanar què volem canviar -> actualitzar
 
         //TODO: menú per triar quin stock actualitzar. Suposem que l'1:
         int lineToUpdate = 0;

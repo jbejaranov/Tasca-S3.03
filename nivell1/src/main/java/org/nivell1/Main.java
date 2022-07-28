@@ -55,13 +55,13 @@ public class Main {
                 case 7 -> StoreManager.getInstance(currentStore).getTotalValue();
 
                 //Crear ticket
-                case 8 -> StoreManager.getInstance(currentStore).createTicket();
+                case 8 -> StoreManager.getInstance(currentStore).createTicket(); //TODO: Ernest
 
                 //Mostrar vendes (historial)
-                case 9 -> StoreManager.getInstance(currentStore).showHistory();
+                case 9 -> StoreManager.getInstance(currentStore).showHistory(); //TODO: Teresa
 
                 //Mostrat total diners vendes
-                case 10 -> StoreManager.getInstance(currentStore).showTotalSales();
+                case 10 -> StoreManager.getInstance(currentStore).showTotalSales(); //TODO:Juan
 
                 //Proves (ELIMINAR!!)
 //                case 11 ->
