@@ -36,27 +36,23 @@ public class StoreManager {
     }
 
     public void addStore() {
-        // TODO: crea arxchivo stock con nombre tienda
+        // TODO: mirar de fer la capçalera de l'arxiu
 
         String fileName = "nivell1/src/main/resources/" + storeName + ".txt";
         File florist = new File(fileName);
 
-        try (FileOutputStream file = new FileOutputStream(fileName, true);
-             OutputStreamWriter out = new OutputStreamWriter(file);
-             BufferedWriter bw = new BufferedWriter(out);
-             PrintWriter writer = new PrintWriter(bw)) {
-
-        } catch (IOException ioe) {
-
-            ioe.printStackTrace();
-        }
-
         if (florist.exists()) {
             System.out.println("La floristeria que vol introduir ja es troba registrada. ");
         } else {
-            //TODO: crear arxiu
+            try (FileOutputStream file = new FileOutputStream(fileName, true);
+                 OutputStreamWriter out = new OutputStreamWriter(file);
+                 BufferedWriter bw = new BufferedWriter(out);
+                 PrintWriter writer = new PrintWriter(bw)) {
+                System.out.println("Botiga creada");
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
         }
-
     }
 
     public void addProduct() {
@@ -83,7 +79,7 @@ public class StoreManager {
             int indexOf = stock.indexOf(productAlreadyExistsFlat);
             //Suma la quantitat de productes antiga i la nova
             newProduct.set(3, String.valueOf(Integer.parseInt(productAlreadyExistsFlat.get(3)) +
-                            Integer.parseInt(newProduct.get(3))));
+                    Integer.parseInt(newProduct.get(3))));
             //Actualitza les quantitats
             stock.set(indexOf, newProduct);
             //Desa tot el stock de nou
