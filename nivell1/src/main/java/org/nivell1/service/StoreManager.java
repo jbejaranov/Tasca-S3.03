@@ -4,7 +4,7 @@ import org.nivell1.products.Decoration;
 import org.nivell1.products.Flower;
 import org.nivell1.products.Product;
 import org.nivell1.products.Tree;
-import org.nivell1.stores.Ticket;
+import org.nivell1.utils.Ticket;
 import org.nivell1.utils.ComparadorProducte;
 import org.nivell1.utils.PropertyFilter;
 
