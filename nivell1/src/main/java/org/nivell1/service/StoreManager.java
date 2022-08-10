@@ -1,13 +1,20 @@
 package org.nivell1.service;
 
+import org.nivell1.products.Decoration;
+import org.nivell1.products.Flower;
+import org.nivell1.products.Product;
+import org.nivell1.products.Tree;
 import org.nivell1.stores.Ticket;
-import org.nivell1.utils.ComparadorLlista;
+import org.nivell1.utils.ComparadorProducte;
+import org.nivell1.utils.PropertyFilter;
 
-import javax.sound.midi.Soundbank;
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,106 +46,135 @@ public class StoreManager {
     }
 
     public void addStore() {
-        // TODO: mirar de fer la capçalera de l'arxiu
 
-        String fileName = "nivell1/src/main/resources/" + storeName + ".txt";
+        //Obtenim el nom nou
+        System.out.println("\nEscolliu el nom de la nova botiga:");
+        String newStore = scanner.nextLine();
+
+        String fileName = "nivell1/src/main/resources/" + newStore + ".txt";
         File florist = new File(fileName);
 
-        if (florist.exists()) {
-            System.out.println("La floristeria que vol introduir ja es troba registrada. ");
+        boolean created;
+
+        //Intentem crear el fitxer
+        try {
+            created = florist.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        //Mirem si s'ha creat
+        if (created) {
+            System.out.println("Botiga creada");
         } else {
-            try (FileOutputStream file = new FileOutputStream(fileName, true);
-                 OutputStreamWriter out = new OutputStreamWriter(file);
-                 BufferedWriter bw = new BufferedWriter(out);
-                 PrintWriter writer = new PrintWriter(bw)) {
-                System.out.println("Botiga creada");
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }
+            System.out.println("La floristeria que voleu introduir ja es troba registrada.");
         }
     }
 
     public void addProduct() {
-        //TODO: canviar a storeName
-        //String fileName = "nivell1/src/main/resources/" + storeName + ".txt";
-        String fileName = "nivell1/src/main/resources/" + "prova" + ".txt";
-        File florist = new File(fileName);
+        String fileName = "nivell1/src/main/resources/" + storeName + ".txt";
 
-        List<String> newProduct = addProductQuestions();
+        //Obtenim el nou producte
+        Product newProduct = addProductQuestions();
 
         //Mirar si un producte ja existeix
-        List<List<String>> stock = getOrderedProductList();
-        List<List<String>> productAlreadyExists = stock.stream()
-                .filter(subList -> newProduct.get(0).equals(subList.get(0)) &&
-                        newProduct.get(1).equals(subList.get(1)) &&
-                        newProduct.get(1).equals(subList.get(2)) &&
-                        newProduct.get(4).equals(subList.get(4))).toList();
+        List<Product> stock = getOrderedProductList();
+
+        PropertyFilter propertyFilter = new PropertyFilter();
+
+        Optional<Product> productAlreadyExists = stock.stream()
+                .filter(product -> product.getClass().getSimpleName().equals(newProduct.getClass().getSimpleName()) &&
+                        product.getName().equals(newProduct.getName()) &&
+                        product.getPrice() == newProduct.getPrice())
+                .filter(propertyFilter.filterProperty(newProduct))
+                .findAny();
 
         //Si ja existeix
-        if (!productAlreadyExists.isEmpty()) {
-            //Fes flat la llista
-            List<String> productAlreadyExistsFlat = productAlreadyExists.stream().flatMap(List::stream).toList();
+        if (productAlreadyExists.isPresent()) {
+
             //Troba l'índex
-            int indexOf = stock.indexOf(productAlreadyExistsFlat);
+            int indexOf = stock.indexOf(productAlreadyExists.get());
+
             //Suma la quantitat de productes antiga i la nova
-            newProduct.set(3, String.valueOf(Integer.parseInt(productAlreadyExistsFlat.get(3)) +
-                    Integer.parseInt(newProduct.get(3))));
-            //Actualitza les quantitats
-            stock.set(indexOf, newProduct);
+            stock.get(indexOf).setQuantity(productAlreadyExists.get().getQuantity() + newProduct.getQuantity());
+
             //Desa tot el stock de nou
-            writeProductsToFile(stock, "stock");
+            writeProductsToFile(stock, storeName);
             System.out.println("Actualitzada quantitat de productes");
+
         } else {
             //Si no existeix:
+
             //Converteix a format csv
-            String toCSV = String.join(",", newProduct);
-            //Escriu l'arxiu
-            try (PrintWriter pw = new PrintWriter(fileName)) {
+            String toCSV = convertProductToCSV(newProduct);
+
+            //Escriu a l'arxiu
+            try (PrintWriter pw = new PrintWriter(new FileWriter(fileName, true))) {
+                //Si és el primer producte, escriu la capçalera també
+                if (stock.isEmpty()) {
+                    pw.println("type,name,price,quantity,property");
+                }
+
                 pw.println(toCSV);
                 System.out.println("Producte afegit");
 
-                //Desa-ho de manera ordenada
-                List<List<String>> orderedList = getOrderedProductList();
-                writeProductsToFile(orderedList, "stock");
-            } catch (FileNotFoundException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            //Desa-ho de manera ordenada
+            List<Product> orderedList = getOrderedProductList();
+            writeProductsToFile(orderedList, storeName);
         }
     }
 
-    public List<String> addProductQuestions() {
-        List<String> questionsList = new ArrayList<>();
+    public Product addProductQuestions() {
+        Product product = null;
 
-        System.out.println("Quin producte voleu introduïr? (Escriviu el nom en anglès) ");
-        String product = scanner.nextLine();
+        System.out.println("Quin tipus de producte voleu introduïr? (Escolliu entre: decoration - flower - tree) ");
+        String productType = scanner.nextLine();
 
-        System.out.println("Introdueix el nom de " + product);
+        //Validació del tipus de producte
+        while (!(productType.equalsIgnoreCase("tree") ||
+                productType.equalsIgnoreCase("flower") ||
+                productType.equalsIgnoreCase("decoration"))) {
+
+            System.out.println("Tipus no vàlid, torneu a provar:");
+            productType = scanner.nextLine();
+        }
+
+        System.out.println("Introdueix el nom de " + productType);
         String name = scanner.nextLine();
 
-        System.out.println("Introdueix el preu de " + product);
+        System.out.println("Introdueix el preu de " + productType);
         String price = scanner.nextLine();
 
-        System.out.println("Introdueix la quantitat de " + product);
+        System.out.println("Introdueix la quantitat de " + productType);
         String quantity = scanner.nextLine();
 
-        if (product.equalsIgnoreCase("tree")) {
-            System.out.println("Introdueix l'altura de l'arbre: ");
-        } else if (product.equalsIgnoreCase("flower")) {
-            System.out.println("Introdueix el color de les flors: ");
-        } else if (product.equalsIgnoreCase("decoration")) {
-            System.out.println("Introdueix el tipus de material: ");
+        switch (productType.toLowerCase()) {
+            case "decoration" -> System.out.println("Introdueix el tipus de material: ");
+            case "flower" -> System.out.println("Introdueix el color de les flors: ");
+            case "tree" -> System.out.println("Introdueix l'altura de l'arbre (m): ");
         }
 
         String property = scanner.nextLine();
 
-        Collections.addAll(questionsList, product, name, price, quantity, property);
+        //Creem el nou objecte
+        switch (productType.toLowerCase()) {
+            case "decoration" ->
+                    product = new Decoration(name, Float.parseFloat(price), Integer.parseInt(quantity), property);
+            case "flower" -> product = new Flower(name, Float.parseFloat(price), Integer.parseInt(quantity), property);
+            case "tree" ->
+                    product = new Tree(name, Float.parseFloat(price), Integer.parseInt(quantity), Double.parseDouble(property));
+        }
 
-        return questionsList;
+        return product;
     }
 
     public void deleteProduct() {
         showStock();
-        List<List<String>> stock = getOrderedProductList();
+        List<Product> stock = getOrderedProductList();
 
         System.out.println("Introduïu número del producte a eliminar:");
         int removeProduct = scanner.nextInt();
@@ -146,36 +182,49 @@ public class StoreManager {
 
         stock.remove(removeProduct - 1);
 
-        //TODO: canviar nom arxiu on escriu (currentStore)
-        writeProductsToFile(stock, "stock2");
+        writeProductsToFile(stock, storeName);
     }
 
-    private List<List<String>> getOrderedProductList() {
-        //TODO: canviar nom arxiu
-        List<List<String>> list = readProductsFromFile("stock");
-        ComparadorLlista comparadorLlista = new ComparadorLlista();
-        list.sort(comparadorLlista);
+    private List<Product> getOrderedProductList() {
+
+        //Obtenim llista ordenada de productes, per tipus i nom (alfabètic)
+        List<Product> list = readProductsFromStock();
+        Comparator<Product> comparadorProducte = new ComparadorProducte().thenComparing(Product::getName);
+        list.sort(comparadorProducte);
         return list;
     }
 
     public void showStock() {
         //Obtenim llista de productes ordenada
-        List<List<String>> list = getOrderedProductList();
-        //Creem un mapa amb llistes de productes classificades per tipus
-        Map<String, List<List<String>>> mapList = list.stream()
-                .collect(Collectors.groupingBy(i -> i.get(0)));
+        List<Product> list = getOrderedProductList();
+
+        //Creem un mapa amb llistes de productes classificades per tipus i ordenades alfabèticament
+        Map<String, List<Product>> treeMapList = list.stream().sorted(Comparator.comparing(Product::getName))
+                .collect(Collectors.groupingBy(i -> i.getClass().getSimpleName(), TreeMap::new, Collectors.toList()));
+
         //Mostrem els productes per pantalla
-        printTable(mapList);
+        printTable(treeMapList);
+    }
+
+    public void showTicket(List<Product> products) {
+
+        //Creem un mapa amb llistes de productes classificades per tipus
+        Map<String, List<Product>> treeMapList = products.stream().sorted(Comparator.comparing(Product::getName))
+                .collect(Collectors.groupingBy(i -> i.getClass().getSimpleName(), TreeMap::new, Collectors.toList()));
+
+        //Mostrem els productes per pantalla
+        printTable(treeMapList);
     }
 
     public void getTotalValue() {
-        //TODO: canviar nom arxiu input
         //Obtenim la llista de productes al stock
-        List<List<String>> list = readProductsFromFile("stock");
-        //Iterem sobre la llisa de productes i multipliquem preu (índex 2) per quantitat (índex 3)
-        double valor = list.stream()
-                .map(element -> Double.parseDouble(element.get(2)) * Double.parseDouble(element.get(3)))
-                .reduce(0d, Double::sum);
+        List<Product> list = readProductsFromStock();
+
+        //Iterem sobre la llisa de productes i multipliquem preu per quantitat
+        float valor = list.stream()
+                .map(product -> product.getPrice() * product.getQuantity())
+                .reduce(0f, Float::sum);
+
         //Format amb 2 decimals
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         System.out.println("El valor total dels productes de la botiga és: " + decimalFormat.format(valor) + " euros");
@@ -183,13 +232,15 @@ public class StoreManager {
 
     public void createTicket() {
 
-        List<List<String>> stock = getOrderedProductList();
+        List<Product> stock;
+        List<Product> ticketProducts = new ArrayList<>();
 
-        List<List<String>> productesTiquet = new ArrayList<>();
-
+        //Menú
         int select;
 
         do {
+            stock = getOrderedProductList();
+
             System.out.println("""
                     -------------------
                     Escolliu una opció:
@@ -215,156 +266,379 @@ public class StoreManager {
                     int quantitatProducte = scanner.nextInt();
                     scanner.nextLine();
 
-                    int quantitatStock = Integer.parseInt(stock.get(numProducte).get(3));
+                    //Si es pot efectuar la compra
+                    if (numProducte <= stock.size()) {
 
-                    if (quantitatProducte == quantitatStock) {
-                        stock.remove(numProducte);
-                        productesTiquet.add(stock.get(numProducte));
-                    } else if (quantitatProducte < quantitatStock) {
-                        List<String> addToTiquet = new ArrayList<>(stock.get(numProducte));
-                        addToTiquet.set(3, String.valueOf(quantitatProducte));
-                        productesTiquet.add(addToTiquet);
+                        //Quant de stock hi ha disponible
+                        int quantitatStock = stock.get(numProducte).getQuantity();
 
-                        stock.get(numProducte).set(3, String.valueOf(quantitatStock - quantitatProducte));
-                        System.out.println("Producte afegit al tiquet");
-                        //TODO: afegir a historial
+                        //Si volem comprar-ho tot, s'esborra del magatzem
+                        if (quantitatProducte == quantitatStock) {
+                            stock.remove(numProducte);
+                            writeProductsToFile(stock, storeName);
+                            ticketProducts.add(stock.get(numProducte));
+
+                        //Si no, actualitzem el producte
+                        } else if (quantitatProducte < quantitatStock) {
+                            Product addToTiquet = stock.get(numProducte);
+
+                            //Hem de clonar l'objecte amb la nova quantitat canviada
+                            Product newProduct = null;
+                            switch (addToTiquet.getClass().getSimpleName()) {
+                                case "Decoration" ->
+                                        newProduct = new Decoration(addToTiquet.getName(), addToTiquet.getPrice(), quantitatProducte, ((Decoration) addToTiquet).getMaterial());
+                                case "Flower" ->
+                                        newProduct = new Flower(addToTiquet.getName(), addToTiquet.getPrice(), quantitatProducte, ((Flower) addToTiquet).getColor());
+                                case "Tree" ->
+                                        newProduct = new Tree(addToTiquet.getName(), addToTiquet.getPrice(), quantitatProducte, ((Tree) addToTiquet).getHeight());
+                            }
+
+                            //Afegim a la llista de tickets
+                            ticketProducts.add(newProduct);
+
+                            //Actualitzem la quantitat i escrivim a arxiu
+                            stock.get(numProducte).setQuantity(quantitatStock - quantitatProducte);
+                            writeProductsToFile(stock, storeName);
+                            System.out.println("Producte afegit al tiquet");
+                        } else {
+                            System.out.println("No podeu adquirir més articles dels que hi ha disponibles, torneu a provar");
+                        }
                     } else {
-                        System.out.println("No podeu adquirir més articles dels que hi ha disponibles, torneu a provar");
+                        System.out.println("El producte seleccionat no existeix");
                     }
                 }
 
 //              //Veure tots els productes ja seleccionats
-                case 2 -> productesTiquet.forEach(System.out::println);
+                case 2 -> showTicket(ticketProducts);
 
                 //Acabar el tiquet
                 case 0 -> System.out.println("Processant la compra");
             }
         } while (select != 0);
 
-        Ticket ticket = new Ticket(productesTiquet);
-
-        writeProductsToFile(stock, "stock");
-        writeProductsToFile(productesTiquet, "Ticket_" + storeName + "_" + ticket.getId());
+        //Desem el ticket i actualizem l'historial
+        Ticket ticket = new Ticket(ticketProducts);
+        writeTicket(ticket);
+        addToHistory(ticketProducts);
     }
 
-    //TODO: mètode per canviar número de stock
-
-    public void updateStock() {
-        List<List<String>> stock = getOrderedProductList();
-        showStock();
-
-        System.out.println("Escolliu quin producte voleu actualitzar:");
-
-        int productNum = scanner.nextInt() - 1;
-        scanner.nextLine();
-
-        List<String> product = new ArrayList<>(stock.get(productNum ));
-
-        System.out.println("Escolliu la propietat del producte que voleu canviar:");
-        System.out.println("""
-                1 - Nom
-                2 - Preu
-                3 - Quantitat
-                4 - Material/Color/Alçada
-                """);
-
-        int property = scanner.nextInt();
-        scanner.nextLine();
-
-        System.out.println("Introduïu el nou valor:");
-
-        String newValue = scanner.nextLine();
-        product.set(property, newValue);
-
-        stock.set(productNum, product);
-        System.out.println("Producte actualizat");
-
-        writeProductsToFile(stock, "stock");
-    }
-
-    private void addToHistory() {
-        //TODO: recibe ticket, genera timestamp y lo guarda todo en el historial
-    }
-
-    public void showHistory() {
-        //TODO: muestra el archivo Historial
-    }
-
-    public void showTotalSales() {
-        //TODO: muestra suma del valor total de los tickets (ventas)
-    }
-
-    public List<List<String>> readProductsFromFile(String fileName) {
-        String inputFile = "nivell1/src/main/resources/" + fileName + ".txt";
-        List<List<String>> listOfLists = new ArrayList<>();
-
-        try {
-            List<String> lines = Files.readAllLines(Paths.get(inputFile));
-            lines.stream()
-                    .filter(line -> !line.isEmpty())
-                    .toList()
-                    .forEach(line -> listOfLists.add(convertCSVToStringList(line)));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return listOfLists;
-    }
-
-    //Depende de como se estructure el fichero Historial puede que haya que hacer metodos a parte para él.
-
-    private List<String> convertToCSVList(List<List<String>> list) {
-        return list.stream()
-                .map(subList -> String.join(",", subList))
-                .toList();
-    }
-
-    private List<String> convertCSVToStringList(String csvString) {
-        return new ArrayList<>(Arrays.asList(csvString.split(",")));
-    }
-
-    public void writeProductsToFile(List<List<String>> productList, String fileName) {
-        //Convertir a llista de strings preparats pel csv
-        List<String> stockToCSVList = convertToCSVList(productList);
+    private void writeTicket(Ticket ticket) {
+        //Convertir a llista de strings preparats pel csv i obtenir la data i l'hora del moment d'escriptura
+        List<String> productsToCSVList = convertToCSVList(ticket.getList());
+        LocalDateTime dateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String dateTimeFormatted = dateTime.format(formatter);
 
         //Escriure a l'arxiu
+        String fileName = "Ticket_" + storeName + "_" + ticket.getId();
         String outputFile = "nivell1/src/main/resources/" + fileName + ".txt";
         try (PrintWriter pw = new PrintWriter(outputFile)) {
-            stockToCSVList.forEach(pw::println);
+            //Capçalera
+            pw.println("type,name,price,quantity,property");
+            //Dades
+            productsToCSVList.forEach(pw::println);
+            //Data i hora
+            pw.println(dateTimeFormatted);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void printTable(Map<String, List<List<String>>> mapList) {
+    public void updateStock() {
+        List<Product> stock = getOrderedProductList();
+        showStock();
+
+        if (!stock.isEmpty()) {
+
+            System.out.println("Escolliu quin producte voleu actualitzar:");
+
+            int productNum = scanner.nextInt() - 1;
+            scanner.nextLine();
+
+            if (productNum <= stock.size()) {
+
+                //Obtenim el producte
+                Product product = stock.get(productNum);
+
+                //Mostrem el producte per pantalla per facilitar-ne la visió
+                List<Product> showProduct = new ArrayList<>();
+                showProduct.add(product);
+                showTicket(showProduct);
+
+                System.out.println("Escolliu la propietat del producte que voleu canviar:");
+                System.out.println("""
+                        1 - Nom
+                        2 - Preu
+                        3 - Quantitat
+                        4 - Material/Color/Alçada
+                        """);
+
+                //Obtenim propietat a canviar
+                int propertyToChange = scanner.nextInt();
+                scanner.nextLine();
+
+                System.out.println("Introduïu el nou valor:");
+
+                //Obtenim nou valor de la propietat
+                String newValue = scanner.nextLine();
+
+                //Fem el canvi
+                switch (propertyToChange) {
+                    case 1 -> product.setName(newValue);
+                    case 2 -> product.setPrice(Float.parseFloat(newValue));
+                    case 3 -> product.setQuantity(Integer.parseInt(newValue));
+                    case 4 -> {
+                        switch (product.getClass().getSimpleName()) {
+                            case "Decoration" -> ((Decoration) product).setMaterial(newValue);
+                            case "Flower" -> ((Flower) product).setColor(newValue);
+                            case "Tree" -> ((Tree) product).setHeight(Double.parseDouble(newValue));
+                        }
+                    }
+                    default -> System.out.println("El valor seleccionat no és vàlid");
+                }
+
+                //Actualitzem valors
+                stock.set(productNum, product);
+                System.out.println("Producte actualizat");
+
+            } else {
+                System.out.println("El producte seleccionat no existeix");
+            }
+
+            //Desem els canvis
+            writeProductsToFile(stock, storeName);
+        }
+    }
+
+    private void addToHistory(List<Product> products) {
+        //Mirar si ja existeix l'historial; si no, crear-lo
+        String fileName = "nivell1/src/main/resources/" + storeName + "_History" + ".txt";
+        File history = new File(fileName);
+        boolean exists = history.exists();
+
+        //Convertir a llista de strings preparats pel csv i obtenir data i hora d'escriptura
+        List<String> productsToCSVList = convertToCSVList(products);
+        LocalDateTime dateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String dateTimeFormatted = dateTime.format(formatter);
+
+        //Escriure a l'arxiu
+        try (PrintWriter pw = new PrintWriter(new FileWriter(fileName, true))) {
+            if (!exists) {
+                //Si és la primera vegada que hi escrivim, posem la capçalera
+                pw.println("type,name,price,quantity,property");
+            }
+            productsToCSVList.forEach(pw::println);
+            pw.println(dateTimeFormatted);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void showHistory() {
+        //Mirar si ja existeix l'historial
+        String fileName = "nivell1/src/main/resources/" + storeName + "_History" + ".txt";
+        File history = new File(fileName);
+        boolean exists = history.exists();
+
+        if (exists) {
+            try {
+                //Obtenim dades i eliminem les línies buides
+                List<String> lines = Files.readAllLines(Paths.get(fileName));
+                lines = lines.stream().skip(1).filter(line -> !line.isEmpty()).toList();
+
+                Map<String, List<Product>> map = new TreeMap<>();
+                List<String> temp = new ArrayList<>();
+
+                //Agrupem en un mapa totes les vendes d'una mateixa data i hora, emprant una llista temporal
+                for (String line : lines) {
+                    if (!Character.isDigit(line.charAt(0))) {
+                        temp.add(line);
+                    } else {
+                        //Convertim a List<Product> abans de desar
+                        map.put(line, temp.stream().map(this::convertCSVToProduct).toList());
+                        temp.clear();
+                    }
+                }
+
+                System.out.println("Mostrant historial de vendes complet:");
+
+                //Obtenim el preu total de venda d'un ticket concret (pertany a una data/hora concreta)
+                for (String dateTime : map.keySet()) {
+                    Float ticketTotal = map.get(dateTime).stream()
+                            .map(product -> product.getQuantity() * product.getPrice())
+                            .reduce(0f, Float::sum);
+
+                    //Imprimim historial d'aquell ticket
+                    System.out.println(dateTime + " - Total: " + ticketTotal + " euros");
+                    System.out.format("%-10s%-10s%-12s%-10s\n", "Nom", "Preu(€)", "Quantitat", "Material");
+                    System.out.format("%-10s%-10s%-12s%-10s\n", "------", "---------", "-----------", "-----------");
+                    for (Product product : map.get(dateTime)) {
+                        switch (product.getClass().getSimpleName()) {
+                            case "Decoration" ->
+                                    System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), ((Decoration) product).getMaterial());
+                            case "Flower" ->
+                                    System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), ((Flower) product).getColor());
+                            case "Tree" ->
+                                    System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), ((Tree) product).getHeight());
+                        }
+
+                    }
+                    System.out.println();
+                }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            System.out.println("Aquesta botiga encara no ha efectuat cap venda");
+        }
+    }
+
+    public void showTotalSales() {
+        String inputFile = "nivell1/src/main/resources/" + storeName + "_History" + ".txt";
+        Float sales;
+
+        //Calculem el valor total de les vendes a l'historial
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(inputFile));
+
+            //Filtrem línies buides, línies que comencin per dígit, i la capçalera. Convertim a producte i obtenim el preu
+            sales = lines.stream()
+                    .filter(line -> !line.isEmpty())
+                    .filter(line -> !Character.isDigit(line.charAt(0)))
+                    .skip(1)
+                    .map(this::convertCSVToProduct)
+                    .map(product -> product.getQuantity() * product.getPrice())
+                    .reduce(0f, Float::sum);
+
+            //Format amb 2 decimals
+            DecimalFormat decimalFormat = new DecimalFormat("0.00");
+            System.out.println("El valor total de les vendes és de: " + decimalFormat.format(sales) + " euros");
+
+        } catch (NoSuchFileException noSuchFileException) {
+            System.out.println("La botiga encara no ha efectuat cap venda");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Product> readProductsFromStock() {
+        String inputFile = "nivell1/src/main/resources/" + storeName + ".txt";
+        List<Product> products = new ArrayList<>();
+
+        //Filtrem línies buides i capçalera. Convertim a producte.
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(inputFile));
+            lines.stream()
+                    .filter(line -> !line.isEmpty())
+                    .skip(1)
+                    .toList()
+                    .forEach(line -> products.add(convertCSVToProduct(line)));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return products;
+    }
+
+    private Product convertCSVToProduct(String productCSV) {
+        List<String> list = convertCSVToStringList(productCSV);
+        Product product = null;
+
+        //Convertim llistat de Strings a Product, segons el tipus
+        switch (list.get(0).toLowerCase()) {
+            case "decoration" ->
+                    product = new Decoration(list.get(1), Float.parseFloat(list.get(2)), Integer.parseInt(list.get(3)), list.get(4));
+            case "flower" ->
+                    product = new Flower(list.get(1), Float.parseFloat(list.get(2)), Integer.parseInt(list.get(3)), list.get(4));
+            case "tree" ->
+                    product = new Tree(list.get(1), Float.parseFloat(list.get(2)), Integer.parseInt(list.get(3)), Double.parseDouble(list.get(4)));
+        }
+        return product;
+    }
+
+    private List<String> convertToCSVList(List<Product> list) {
+        //Converteix llista de productes a llista de CSVs
+        return list.stream().map(this::convertProductToCSV).toList();
+    }
+
+    private String convertProductToCSV(Product product) {
+        String CSV_SEPARATOR = ",";
+
+        //Obtenim la propietat
+        Object property = null;
+        switch (product.getClass().getSimpleName()) {
+            case "Decoration" -> property = ((Decoration) product).getMaterial();
+            case "Flower" -> property = ((Flower) product).getColor();
+            case "Tree" -> property = ((Tree) product).getHeight();
+        }
+
+        //Retorna serialització a CSV
+        return product.getClass().getSimpleName() + CSV_SEPARATOR +
+                product.getName() + CSV_SEPARATOR +
+                product.getPrice() + CSV_SEPARATOR +
+                product.getQuantity() + CSV_SEPARATOR +
+                property;
+    }
+
+    private List<String> convertCSVToStringList(String csvString) {
+        //Converteix CSV a llista de Strings
+        return new ArrayList<>(Arrays.asList(csvString.split(",")));
+    }
+
+    public void writeProductsToFile(List<Product> productList, String fileName) {
+        //Convertir a llista de strings preparats pel csv
+        List<String> productsToCSVList = convertToCSVList(productList);
+
+        //Escriure a l'arxiu
+        String outputFile = "nivell1/src/main/resources/" + fileName + ".txt";
+        try (PrintWriter pw = new PrintWriter(outputFile)) {
+            pw.println("type,name,price,quantity,property");
+            productsToCSVList.forEach(pw::println);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void printTable(Map<String, List<Product>> mapList) {
         int index = 1;
 
-        if (mapList.containsKey("decoration")) {
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu(€)", "Quantitat", "Material");
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
-            for (List<String> value : mapList.get("decoration")) {
-                System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+        if (mapList.isEmpty()) {
+            System.out.println("No hi ha productes a mostrar");
+        }
+
+        //Imprimeix només els tipus de productes que existeixen
+
+        if (mapList.containsKey("Decoration")) {
+            System.out.println("Decoration:");
+            System.out.format("%-10s%-10s%-10s%-12s%-10s\n", "Numero", "Nom", "Preu(€)", "Quantitat", "Material");
+            System.out.format("%-10s%-10s%-10s%-12s%-10s\n", "-------", "------", "---------", "-----------", "-----------");
+            for (Product value : mapList.get("Decoration")) {
+                System.out.format("%-10s%-10s%-10s%-12s%-10s\n", index, value.getName(), value.getPrice(), value.getQuantity(), ((Decoration) value).getMaterial());
                 index++;
             }
             System.out.println();
         }
 
-        if (mapList.containsKey("flower")) {
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Color");
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+        if (mapList.containsKey("Flower")) {
+            System.out.println("Flower:");
+            System.out.format("%-10s%-10s%-10s%-12s%-10s\n", "Numero", "Nom", "Preu (€)", "Quantitat", "Color");
+            System.out.format("%-10s%-10s%-10s%-12s%-10s\n", "-------", "------", "---------", "-----------", "-----------");
 
-            for (List<String> value : mapList.get("flower")) {
-                System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+            for (Product value : mapList.get("Flower")) {
+                System.out.format("%-10s%-10s%-10s%-12s%-10s\n", index, value.getName(), value.getPrice(), value.getQuantity(), ((Flower) value).getColor());
                 index++;
             }
             System.out.println();
         }
 
-        if (mapList.containsKey("tree")) {
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "Numero", "Tipus", "Nom", "Preu (€)", "Quantitat", "Altura (m)");
-            System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", "-------", "----------", "------", "---------", "-----------", "-----------");
+        if (mapList.containsKey("Tree")) {
+            System.out.println("Tree:");
+            System.out.format("%-10s%-10s%-10s%-12s%-10s\n", "Numero", "Nom", "Preu (€)", "Quantitat", "Altura (m)");
+            System.out.format("%-10s%-10s%-10s%-12s%-10s\n", "-------", "------", "---------", "-----------", "-----------");
 
-            for (List<String> value : mapList.get("tree")) {
-                System.out.format("%-10s%-15s%-10s%-10s%-12s%-10s\n", index, value.get(0), value.get(1), value.get(2), value.get(3), value.get(4));
+            for (Product value : mapList.get("Tree")) {
+                System.out.format("%-10s%-10s%-10s%-12s%-10s\n", index, value.getName(), value.getPrice(), value.getQuantity(), ((Tree) value).getHeight());
                 index++;
             }
         }

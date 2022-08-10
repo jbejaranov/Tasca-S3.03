@@ -1,0 +1,12 @@
+type,name,price,quantity,property
+Decoration,bolet,0.99,12,fusta
+Decoration,maceta,2.99,17,plàstic
+Decoration,taula,29.99,6,fusta
+Flower,anemona,3.49,5,morada
+Flower,clavell,1.59,11,blanc
+Flower,rosa,1.99,17,blanca
+Flower,rosella,4.95,13,vermella
+Tree,alber,11.99,14,2.3
+Tree,cirerer,17.99,5,1.9
+Tree,noguera,17.49,8,1.8
+Tree,pomera,6.99,22,1.2

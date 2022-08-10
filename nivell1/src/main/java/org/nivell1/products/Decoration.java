@@ -2,7 +2,7 @@ package org.nivell1.products;
 
 public class Decoration extends Product{
 
-    private final String material;
+    private  String material;
 
     public Decoration(String name, float price, int quantity, String material) {
         super(name, price, quantity);
@@ -11,5 +11,9 @@ public class Decoration extends Product{
 
     public String getMaterial() {
         return material;
+    }
+
+    public void setMaterial(String material) {
+        this.material = material;
     }
 }
