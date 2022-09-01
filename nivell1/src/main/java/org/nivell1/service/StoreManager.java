@@ -22,10 +22,10 @@ public class StoreManager {
 
     //Singleton de gestió de botigues
 
+    private static final Scanner scanner = new Scanner(System.in);
+
     private static StoreManager instance;
     private String storeName;
-
-    private static final Scanner scanner = new Scanner(System.in);
 
     //Private constructor
     private StoreManager() {
@@ -180,7 +180,11 @@ public class StoreManager {
         int removeProduct = scanner.nextInt();
         scanner.nextLine();
 
-        stock.remove(removeProduct - 1);
+        if (removeProduct > 0 && removeProduct < stock.size()) {
+            stock.remove(removeProduct - 1);
+        } else {
+            System.out.println("El producte seleccionat no existeix");
+        }
 
         writeProductsToFile(stock, storeName);
     }
@@ -277,6 +281,7 @@ public class StoreManager {
                             stock.remove(numProducte);
                             writeProductsToFile(stock, storeName);
                             ticketProducts.add(stock.get(numProducte));
+                            System.out.println("Producte afegit al tiquet");
 
                         //Si no, actualitzem el producte
                         } else if (quantitatProducte < quantitatStock) {
@@ -399,7 +404,7 @@ public class StoreManager {
 
                 //Actualitzem valors
                 stock.set(productNum, product);
-                System.out.println("Producte actualizat");
+                System.out.println("Producte actualitzat");
 
             } else {
                 System.out.println("El producte seleccionat no existeix");

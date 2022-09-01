@@ -2,7 +2,7 @@ package org.nivell1.products;
 
 public class Decoration extends Product{
 
-    private  String material;
+    private String material;
 
     public Decoration(String name, float price, int quantity, String material) {
         super(name, price, quantity);
