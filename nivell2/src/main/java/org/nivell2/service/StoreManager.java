@@ -161,7 +161,6 @@ public class StoreManager {
     public void deleteProduct() {
         //Obtenim llistat de productes
         showStock();
-        List<Product> stock = getOrderedProductList();
 
         //Obtenim índex
         System.out.println("Introduïu número del producte a eliminar:");
@@ -200,8 +199,11 @@ public class StoreManager {
         List<Product> list = getOrderedProductList();
 
         //Creem un mapa amb llistes de productes classificades per tipus i ordenades alfabèticament
-        Map<String, List<Product>> treeMapList = list.stream().sorted(Comparator.comparing(Product::getName))
-                .collect(Collectors.groupingBy(i -> i.getClass().getSimpleName(), TreeMap::new, Collectors.toList()));
+        Map<String, List<Product>> treeMapList = list.stream()
+                .sorted(Comparator.comparing(Product::getName))
+                .collect(Collectors.groupingBy(i -> i.getClass().getSimpleName(),
+                        TreeMap::new,
+                        Collectors.toList()));
 
         //Mostrem els productes per pantalla
         printTable(treeMapList);
@@ -229,7 +231,7 @@ public class StoreManager {
                 valor = resultSet.getFloat(1);
             }
         } catch (SQLException e) {
-            System.out.println("No s'ha pogut eliminar el producte");
+            System.out.println("No s'ha pogut obtenir el valor total dels productes");
             e.printStackTrace();
         }
 
@@ -239,8 +241,6 @@ public class StoreManager {
     }
 
     public void generateTicket() {
-
-        List<Product> ticketProducts = new ArrayList<>();
 
         //Crea ticket amb timestamp a la BD
         int ticketIndex = createTicket();
