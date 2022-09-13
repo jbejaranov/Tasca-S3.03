@@ -8,7 +8,7 @@ import java.util.UUID;
 public class Ticket {
 
     private final List<Product> list;
-    private String id;
+    private final String id;
 
     public Ticket(List<Product> list) {
         id = UUID.randomUUID().toString();
@@ -21,9 +21,5 @@ public class Ticket {
 
     public String getId() {
         return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 }
