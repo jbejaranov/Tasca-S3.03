@@ -10,10 +10,6 @@ import org.nivell3.products.Decoration;
 import org.nivell3.products.Flower;
 import org.nivell3.products.Tree;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;

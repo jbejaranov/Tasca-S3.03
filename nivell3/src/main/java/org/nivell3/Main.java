@@ -1,26 +1,20 @@
 package org.nivell3;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.client.*;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.types.ObjectId;
 import org.nivell3.products.Decoration;
 import org.nivell3.products.Flower;
 import org.nivell3.products.Product;
 import org.nivell3.products.Tree;
 import org.nivell3.service.DBConnection;
+import org.nivell3.service.StoreManager;
 
-import java.sql.Connection;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 
 
 public class Main {
@@ -52,48 +46,48 @@ public class Main {
         productsFound.forEach(product -> System.out.println(product.getProperty()));
 
 
-//        //Menú
-//        int select;
-//
-//        do {
-//            printMenu();
-//
-//            select = scanner.nextInt();
-//            scanner.nextLine();
-//
-//            switch (select) {
-//
-//                //Introduir producte a botiga
-//                case 1 -> StoreManager.getInstance(connection).addProduct();
-//
-//                //Actualitzar producte a botiga
-//                case 2 -> StoreManager.getInstance(connection).updateStock();
-//
-//                //Esborrar producte de botiga
-//                case 3 -> StoreManager.getInstance(connection).deleteProduct();
-//
-//                //Mostrar stock amb quantitats
-//                case 4 -> StoreManager.getInstance(connection).showStock();
-//
-//                //Mostrar valor total
-//                case 5 -> StoreManager.getInstance(connection).getTotalValue();
-//
-//                //Crear ticket
-//                case 6 -> StoreManager.getInstance(connection).generateTicket();
-//
-//                //Mostrar vendes (historial)
-//                case 7 -> StoreManager.getInstance(connection).showHistory();
-//
-//                //Mostrat total diners vendes
-//                case 8 -> StoreManager.getInstance(connection).showTotalSales();
-//
-//                //Sortir del programa
-//                case 0 -> DBConnection.closeConnection();
-//            }
-//
-//        } while (select != 0);
-//
-//        System.out.println("Sortint del programa");
+        //Menú
+        int select;
+
+        do {
+            printMenu();
+
+            select = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (select) {
+
+                //Introduir producte a botiga
+                case 1 -> StoreManager.getInstance(database).addProduct();
+
+                //Actualitzar producte a botiga
+                case 2 -> StoreManager.getInstance(database).updateStock();
+
+                //Esborrar producte de botiga
+                case 3 -> StoreManager.getInstance(database).deleteProduct();
+
+                //Mostrar stock amb quantitats
+                case 4 -> StoreManager.getInstance(database).showStock();
+
+                //Mostrar valor total
+                case 5 -> StoreManager.getInstance(database).getTotalValue();
+
+                //Crear ticket
+                case 6 -> StoreManager.getInstance(database).generateTicket();
+
+                //Mostrar vendes (historial)
+                case 7 -> StoreManager.getInstance(database).showHistory();
+
+                //Mostrat total diners vendes
+                case 8 -> StoreManager.getInstance(database).showTotalSales();
+
+                //Sortir del programa
+                case 0 -> DBConnection.closeConnection();
+            }
+
+        } while (select != 0);
+
+        System.out.println("Sortint del programa");
     }
 
     public static void printMenu() {
