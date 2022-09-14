@@ -42,6 +42,7 @@ public class Main {
         productsFound.forEach(product -> System.out.println(product.getProperty()));
 
         collection.deleteMany(new Document());
+
         //Menú
         int select;
 
