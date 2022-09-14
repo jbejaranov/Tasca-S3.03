@@ -33,10 +33,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-        MongoCollection<Document> products = database.getCollection("products");
-
-        products.deleteMany(new Document());
-
         MongoCollection<Product> collection = database.getCollection("products", Product.class);
         collection.insertOne(new Decoration(new ObjectId(), "nom", 1f, 1, "fusta"));
         collection.insertOne(new Flower(new ObjectId(), "nom", 1f, 1, "blanc"));
@@ -45,7 +41,7 @@ public class Main {
         FindIterable<Product> productsFound = collection.find();
         productsFound.forEach(product -> System.out.println(product.getProperty()));
 
-
+        collection.deleteMany(new Document());
         //Menú
         int select;
 
