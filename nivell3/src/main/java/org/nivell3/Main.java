@@ -33,15 +33,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        MongoCollection<Product> collection = database.getCollection("products", Product.class);
-        collection.insertOne(new Decoration(new ObjectId(), "nom", 1f, 1, "fusta"));
-        collection.insertOne(new Flower(new ObjectId(), "nom", 1f, 1, "blanc"));
-        collection.insertOne(new Tree(new ObjectId(), "nom", 1f, 1, 1d));
-
-        FindIterable<Product> productsFound = collection.find();
-        productsFound.forEach(product -> System.out.println(product.getProperty()));
-
-        collection.deleteMany(new Document());
+        //database.getCollection("products").deleteMany(new Document());
 
         //Menú
         int select;
@@ -57,26 +49,26 @@ public class Main {
                 //Introduir producte a botiga
                 case 1 -> StoreManager.getInstance(database).addProduct();
 
-                //Actualitzar producte a botiga
-                case 2 -> StoreManager.getInstance(database).updateStock();
-
-                //Esborrar producte de botiga
-                case 3 -> StoreManager.getInstance(database).deleteProduct();
-
+//                //Actualitzar producte a botiga
+//                case 2 -> StoreManager.getInstance(database).updateStock();
+//
+//                //Esborrar producte de botiga
+//                case 3 -> StoreManager.getInstance(database).deleteProduct();
+//
                 //Mostrar stock amb quantitats
                 case 4 -> StoreManager.getInstance(database).showStock();
-
-                //Mostrar valor total
-                case 5 -> StoreManager.getInstance(database).getTotalValue();
-
-                //Crear ticket
-                case 6 -> StoreManager.getInstance(database).generateTicket();
-
-                //Mostrar vendes (historial)
-                case 7 -> StoreManager.getInstance(database).showHistory();
-
-                //Mostrat total diners vendes
-                case 8 -> StoreManager.getInstance(database).showTotalSales();
+//
+//                //Mostrar valor total
+//                case 5 -> StoreManager.getInstance(database).getTotalValue();
+//
+//                //Crear ticket
+//                case 6 -> StoreManager.getInstance(database).generateTicket();
+//
+//                //Mostrar vendes (historial)
+//                case 7 -> StoreManager.getInstance(database).showHistory();
+//
+//                //Mostrat total diners vendes
+//                case 8 -> StoreManager.getInstance(database).showTotalSales();
 
                 //Sortir del programa
                 case 0 -> DBConnection.closeConnection();
