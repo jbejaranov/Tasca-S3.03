@@ -165,16 +165,10 @@ public class StoreManager {
         return list;
     }
 
-    private Map<String, List<Tuple>> getTupleList(List<Product> productList) {
+    private Map<String, List<Tuple>> getTupleMap(List<Product> productList) {
 
         //Primer convertim la llista de productes a llista de Tuples, creant els índexs
-        int size = productList.size();
-        List<Tuple> tupleList = IntStream.rangeClosed(1, size)
-                .boxed()
-                .toList()
-                .stream()
-                .map(index -> new Tuple(index, productList.get(index - 1)))
-                .toList();
+        List<Tuple> tupleList = getTupleList(productList);
 
         //Després classifiquem els productes segons la seva classe
         return tupleList.stream()
@@ -183,12 +177,22 @@ public class StoreManager {
                         Collectors.toList()));
     }
 
+    private List<Tuple> getTupleList(List<Product> productList) {
+        //Crea una llista de Tuples amb l'índex corresponent
+        return IntStream.rangeClosed(1, productList.size())
+                .boxed()
+                .toList()
+                .stream()
+                .map(index -> new Tuple(index, productList.get(index - 1)))
+                .toList();
+    }
+
     public void showStock() {
         //Obtenim llista de productes ordenada
         List<Product> list = getOrderedProductList();
 
         //Obtenim el mapa amb llistes de productes i índexs, classificats per tipus
-        Map<String, List<Tuple>> collection = getTupleList(list);
+        Map<String, List<Tuple>> collection = getTupleMap(list);
 
         //Mostrem els productes per pantalla
         printTable(collection);
