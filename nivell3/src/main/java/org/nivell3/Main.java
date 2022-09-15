@@ -27,13 +27,7 @@ public class Main {
     private static final MongoDatabase database = DBConnection.getConnection(currentStore);
     private static final Scanner scanner = new Scanner(System.in);
 
-    protected static Class<?>[] getSubClasses() {
-        return new Class<?>[]{Decoration.class, Flower.class, Tree.class};
-    }
-
     public static void main(String[] args) {
-
-        //database.getCollection("products").deleteMany(new Document());
 
         //Menú
         int select;
@@ -52,9 +46,9 @@ public class Main {
 //                //Actualitzar producte a botiga
 //                case 2 -> StoreManager.getInstance(database).updateStock();
 //
-//                //Esborrar producte de botiga
-//                case 3 -> StoreManager.getInstance(database).deleteProduct();
-//
+                //Esborrar producte de botiga
+                case 3 -> StoreManager.getInstance(database).deleteProduct();
+
                 //Mostrar stock amb quantitats
                 case 4 -> StoreManager.getInstance(database).showStock();
 
@@ -63,12 +57,12 @@ public class Main {
 
                 //Crear ticket
                 case 6 -> StoreManager.getInstance(database).generateTicket();
-//
-//                //Mostrar vendes (historial)
-//                case 7 -> StoreManager.getInstance(database).showHistory();
-//
-//                //Mostrat total diners vendes
-//                case 8 -> StoreManager.getInstance(database).showTotalSales();
+
+                //Mostrar vendes (historial)
+                case 7 -> StoreManager.getInstance(database).showHistory();
+
+                //Mostrat total diners vendes
+                case 8 -> StoreManager.getInstance(database).showTotalSales();
 
                 //Sortir del programa
                 case 0 -> DBConnection.closeConnection();

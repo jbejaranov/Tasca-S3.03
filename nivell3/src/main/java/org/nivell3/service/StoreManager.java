@@ -1,12 +1,11 @@
 package org.nivell3.service;
 
+import com.google.gson.Gson;
 import com.mongodb.client.*;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonNull;
 import org.bson.Document;
-import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.nivell3.products.Decoration;
@@ -33,7 +32,6 @@ public class StoreManager {
 
     private static final Scanner scanner = new Scanner(System.in);
     private static StoreManager instance;
-    private static MongoDatabase database;
     private static MongoCollection<Product> collection_products;
     private static MongoCollection<Ticket> collection_tickets;
 
@@ -50,12 +48,7 @@ public class StoreManager {
             collection_products = database.getCollection("products", Product.class);
             collection_tickets = database.getCollection("tickets", Ticket.class);
         }
-        setDatabase(database);
         return instance;
-    }
-
-    public static void setDatabase(MongoDatabase database) {
-        StoreManager.database = database;
     }
 
     public void addProduct() {
@@ -132,33 +125,30 @@ public class StoreManager {
         return product;
     }
 
-    //TODO
-//    public void deleteProduct() {
-//        //Obtenim llistat de productes
-//        showStock();
-//
-//        //Obtenim índex
-//        System.out.println("Introduïu número del producte a eliminar:");
-//        int index = scanner.nextInt();
-//        scanner.nextLine();
-//
-//        //Eliminem el producte
-//        String sqlDelete = "DELETE FROM products WHERE id_product = ?";
-//        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlDelete)) {
-//
-//            preparedStatement.setInt(1, index);
-//            int i = preparedStatement.executeUpdate();
-//
-//            if (i == 1) {
-//                System.out.println("Producte eliminat");
-//            } else {
-//                System.out.println("El producte seleccionat no existeix");
-//            }
-//        } catch (SQLException e) {
-//            System.out.println("No s'ha pogut eliminar el producte");
-//            e.printStackTrace();
-//        }
-//    }
+    public void deleteProduct() {
+
+        //Obtenim llistat de productes
+        showStock();
+        List<Tuple> tupleList = getTupleList(getOrderedProductList());
+
+        //Obtenim índex
+        System.out.println("Introduïu número del producte a eliminar:");
+        int deleteIndex = scanner.nextInt();
+        scanner.nextLine();
+
+        //Eliminem el producte
+        Optional<Tuple> optionalTuple = tupleList.stream().filter(tuple -> tuple.getIndex() == deleteIndex).findFirst();
+
+        if (optionalTuple.isPresent()) {
+            //Si existeix
+            collection_products.deleteOne(eq("_id", tupleList.get(deleteIndex - 1).getProduct().getId()));
+            System.out.println("Producte eliminat");
+        } else {
+            //Si no existeix:
+            System.out.println("El producte seleccionat no existeix");
+        }
+    }
+
 
     private List<Product> getOrderedProductList() {
 
@@ -182,6 +172,7 @@ public class StoreManager {
     }
 
     private List<Tuple> getTupleList(List<Product> productList) {
+
         //Crea una llista de Tuples amb l'índex corresponent
         return IntStream.rangeClosed(1, productList.size())
                 .boxed()
@@ -192,6 +183,7 @@ public class StoreManager {
     }
 
     public void showStock() {
+
         //Obtenim llista de productes ordenada
         List<Product> list = getOrderedProductList();
 
@@ -278,6 +270,7 @@ public class StoreManager {
                     //Si es pot efectuar la compra
                     if (productIndex <= productTuples.size()) {
 
+                        //Obtenim el producte concret
                         Product product = productTuples.get(productIndex - 1).getProduct();
 
                         //Quant de stock hi ha disponible
@@ -285,7 +278,7 @@ public class StoreManager {
 
                         //Comprovem que la quantitat és correcta
                         if (quantitatCompra <= quantitatStock) {
-                            collection_tickets.deleteMany(new Document());
+
                             //Preparem la query per actualitzar el valor de la quantitat a la BD
                             collection_products.updateOne(eq(product.getId()),
                                     Updates.set("quantity", quantitatStock - quantitatCompra));
@@ -405,99 +398,86 @@ public class StoreManager {
 //            }
 //        }
 //    }
-//
-//    //TODO
-//    public void showHistory() {
-//
-//        //Inicialitzem mapa i query
-//        Map<String, List<Product>> map = new TreeMap<>();
-//        String sqlSelectAll = "SELECT p.*, pt.quantity, t.datetime FROM products_tickets pt JOIN products p ON p.id_product = pt.product_id JOIN tickets t ON t.id_ticket = pt.ticket_id";
-//
-//        //Executem la query
-//        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlSelectAll)) {
-//
-//            ResultSet resultSet = preparedStatement.executeQuery();
-//
-//            //Llista temporal dummy
-//            List<Product> temp = new ArrayList<>();
-//            while (resultSet.next()) {
-//                String id = resultSet.getString("id_product");
-//                String type = resultSet.getString("type");
-//                String name = resultSet.getString("name");
-//                float price = resultSet.getFloat("price");
-//                int quantity = resultSet.getInt("pt.quantity");
-//                String property = resultSet.getString("property");
-//                String timestamp = resultSet.getTimestamp("t.datetime").toString();
-//
-//                //Desem cada compra en un mapa on la key és el timestamp; si ja n'hi ha un, hi afegim
-//                if (map.containsKey(timestamp)) {
-//                    temp = map.get(timestamp);
-//                    temp.add(buildProduct(id, type, name, price, quantity, property));
-//                    map.replace(timestamp, new ArrayList<>(temp));
-//                } else {
-//                    temp.add(buildProduct(id, type, name, price, quantity, property));
-//                    map.put(timestamp, new ArrayList<>(temp));
-//                }
-//                //Esborrem la llista dummy
-//                temp.clear();
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//
-//        System.out.println("Mostrant historial de vendes complet:");
-//
-//        if (map.isEmpty()) {
-//            System.out.println("Aquesta botiga encara no ha efectuat cap venda");
-//        }
-//
-//        //Obtenim el preu total de venda d'un ticket concret (pertany a una data/hora concreta)
-//        for (String dateTime : map.keySet()) {
-//            Float ticketTotal = map.get(dateTime).stream()
-//                    .map(product -> product.getQuantity() * product.getPrice())
-//                    .reduce(0f, Float::sum);
-//
-//            //Imprimim historial d'aquell ticket
-//            System.out.println(dateTime + " - Total: " + ticketTotal + " euros");
-//            System.out.format("%-10s%-10s%-12s%-10s\n", "Nom", "Preu(€)", "Quantitat", "Material");
-//            System.out.format("%-10s%-10s%-12s%-10s\n", "------", "---------", "-----------", "-----------");
-//            for (Product product : map.get(dateTime)) {
-//                switch (product.getClass().getSimpleName()) {
-//                    case "Decoration" ->
-//                            System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), ((Decoration) product).getMaterial());
-//                    case "Flower" ->
-//                            System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), ((Flower) product).getColor());
-//                    case "Tree" ->
-//                            System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), ((Tree) product).getHeight());
-//                }
-//
-//            }
-//            System.out.println();
-//        }
-//    }
-//
-//    //TODO
-//    public void showTotalSales() {
-//        Float sales = 0f;
-//
-//        //Calculem el valor total de les vendes a l'historial
-//        String sqlSelectAllSales = "SELECT SUM(pt.quantity * p.price) FROM products_tickets pt JOIN products p ON p.id_product = pt.product_id JOIN tickets t ON t.id_ticket = pt.ticket_id";
-//
-//        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlSelectAllSales)) {
-//
-//            ResultSet resultSet = preparedStatement.executeQuery();
-//            if (resultSet.next()) {
-//                sales = resultSet.getFloat(1);
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        //Format amb 2 decimals
-//        DecimalFormat decimalFormat = new DecimalFormat("0.00");
-//        System.out.println("El valor total de les vendes és de: " + decimalFormat.format(sales) + " euros");
-//
-//    }
-//
+
+    public void showHistory() {
+
+        //Hem de crear un client nou sense el còdec de conversió als POJOs de product,
+        //que treballi amb Document, i obtenir els Documents de tickets
+        MongoCollection<Document> ticketCollection = MongoClients.create().getDatabase("floristeria").getCollection("tickets");
+        FindIterable<Document> tickets = ticketCollection.find();
+
+        //Instanciem un nou Gson per deserialitzar els Documents
+        Gson gson = new Gson();
+        List<Ticket> ticketList = new ArrayList<>();
+        tickets.forEach(ticket -> ticketList.add(gson.fromJson(ticket.toJson(), Ticket.class)));
+
+        System.out.println("Mostrant historial de vendes complet:");
+
+        if (ticketList.isEmpty()) {
+            System.out.println("Aquesta botiga encara no ha efectuat cap venda");
+        }
+
+        //Obtenim el preu total de venda d'un ticket concret
+        for (Ticket ticket : ticketList) {
+            float ticketTotal = ticket.getDecorationList().stream()
+                    .map(product -> product.getQuantity() * product.getPrice())
+                    .reduce(0f, Float::sum) +
+                    ticket.getFlowerList().stream()
+                            .map(product -> product.getQuantity() * product.getPrice())
+                            .reduce(0f, Float::sum) +
+                    ticket.getTreeList().stream()
+                            .map(product -> product.getQuantity() * product.getPrice())
+                            .reduce(0f, Float::sum);
+
+            //Imprimim historial d'aquell ticket
+            System.out.println(ticket.getDateTime() + " - Total: " + ticketTotal + " euros");
+            System.out.format("%-10s%-10s%-12s%-10s\n", "Nom", "Preu(€)", "Quantitat", "Material");
+            System.out.format("%-10s%-10s%-12s%-10s\n", "------", "---------", "-----------", "-----------");
+            for (Decoration product : ticket.getDecorationList()) {
+                System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), product.getProperty());
+            }
+            for (Flower product : ticket.getFlowerList()) {
+                System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), product.getProperty());
+            }
+            for (Tree product : ticket.getTreeList()) {
+                System.out.format("%-10s%-10s%-12s%-10s\n", product.getName(), product.getPrice(), product.getQuantity(), product.getProperty());
+            }
+            System.out.println();
+        }
+    }
+
+    public void showTotalSales() {
+
+        //Calculem el valor total de les vendes a l'historial amb una query
+        List<Document> query = Arrays.asList(new Document("$project",
+                        new Document("all_products",
+                                new Document("$concatArrays", Arrays.asList("$decorationList", "$flowerList", "$treeList")))),
+                new Document("$unwind",
+                        new Document("path", "$all_products")),
+                new Document("$group",
+                        new Document("_id",
+                                new BsonNull())
+                                .append("total",
+                                        new Document("$sum",
+                                                new Document("$multiply", Arrays.asList("$all_products.price", "$all_products.quantity"))))));
+
+        //Hem de crear un client nou sense el còdec de conversió als POJOs de product, que treballi amb Document
+        MongoClient client = MongoClients.create();
+        AggregateIterable<Document> aggregate = client.getDatabase("floristeria").getCollection("tickets").aggregate(query);
+        MongoCursor<Document> iterator = aggregate.iterator();
+
+        //Obtenim el valor del Document retornat
+        double valor = 0;
+        while (iterator.hasNext()) {
+            Document next = iterator.next();
+            valor = (double) next.get("total");
+        }
+
+        //Format amb 2 decimals
+        DecimalFormat decimalFormat = new DecimalFormat("0.00");
+        System.out.println("El valor total de les vendes és de: " + decimalFormat.format(valor) + " euros");
+    }
+
     public List<Product> readProductsFromStock() {
 
         FindIterable<Product> productsMongo = collection_products.find();
@@ -507,35 +487,6 @@ public class StoreManager {
         return products;
     }
 
-    //
-//    //TODO
-//    public Product readProductById(int id_product) {
-//
-//        Product product = null;
-//        String sqlSelectAll = "SELECT * FROM products WHERE id_product = ?";
-//
-//        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlSelectAll)) {
-//
-//            preparedStatement.setInt(1, id_product);
-//            ResultSet resultSet = preparedStatement.executeQuery();
-//
-//            while (resultSet.next()) {
-//                String id = resultSet.getString("id_product");
-//                String type = resultSet.getString("type");
-//                String name = resultSet.getString("name");
-//                float price = resultSet.getFloat("price");
-//                int quantity = resultSet.getInt("quantity");
-//                String property = resultSet.getString("property");
-//
-//                product = buildProduct(id, type, name, price, quantity, property);
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return product;
-//    }
-//
     private Product buildProduct(ObjectId id, String type, String name, float price, int quantity, String property) {
         Product product = null;
 
@@ -548,20 +499,6 @@ public class StoreManager {
         return product;
     }
 
-    //
-//    //TODO
-//    private Object getProperty(Product product) {
-//
-//        //Obtenim la propietat concreta depenent del tipus
-//        Object property = null;
-//        switch (product.getClass().getSimpleName()) {
-//            case "Decoration" -> property = ((Decoration) product).getMaterial();
-//            case "Flower" -> property = ((Flower) product).getColor();
-//            case "Tree" -> property = ((Tree) product).getHeight();
-//        }
-//        return property;
-//    }
-//
     private void printTable(Map<String, List<Tuple>> mapList) {
 
         if (mapList.isEmpty()) {
