@@ -1,10 +1,11 @@
 package org.nivell3.service;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import org.bson.BsonNull;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.nivell3.products.Decoration;
@@ -15,6 +16,7 @@ import org.nivell3.utils.ComparadorProducte;
 import org.nivell3.utils.Ticket;
 import org.nivell3.utils.Tuple;
 
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -209,27 +211,32 @@ public class StoreManager {
 //        printTable(treeMapList);
 //    }
 //
-//    //TODO
-//    public void getTotalValue() {
-//
-//        //Obtenim el valor total mitjançant una query SQL
-//        float valor = 0;
-//        String sqlTotal = "SELECT SUM(price * quantity) FROM products";
-//        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlTotal)) {
-//
-//            ResultSet resultSet = preparedStatement.executeQuery();
-//            if (resultSet.next()) {
-//                valor = resultSet.getFloat(1);
-//            }
-//        } catch (SQLException e) {
-//            System.out.println("No s'ha pogut obtenir el valor total dels productes");
-//            e.printStackTrace();
-//        }
-//
-//        //Format amb 2 decimals
-//        DecimalFormat decimalFormat = new DecimalFormat("0.00");
-//        System.out.println("El valor total dels productes de la botiga és: " + decimalFormat.format(valor) + " euros");
-//    }
+    public void getTotalValue() {
+
+        //Obtenim el valor total mitjançant una query
+        List<Document> query = List.of(new Document("$group",
+                new Document("_id",
+                        new BsonNull())
+                        .append("total",
+                                new Document("$sum",
+                                        new Document("$multiply", Arrays.asList("$price", "$quantity"))))));
+
+        //Hem de crear un client nou sense el còdec de conversió als POJOs de product, que treballi amb Document
+        MongoClient client = MongoClients.create();
+        AggregateIterable<Document> aggregate = client.getDatabase("floristeria").getCollection("products").aggregate(query);
+        MongoCursor<Document> iterator = aggregate.iterator();
+
+        //Obtenim el valor del Document retornat
+        double valor = 0;
+        while (iterator.hasNext()) {
+            Document next = iterator.next();
+            valor = (double) next.get("total");
+        }
+
+        //Format amb 2 decimals
+        DecimalFormat decimalFormat = new DecimalFormat("0.00");
+        System.out.println("El valor total dels productes de la botiga és: " + decimalFormat.format(valor) + " euros");
+    }
 //
 //    //TODO
 //    public void generateTicket() {

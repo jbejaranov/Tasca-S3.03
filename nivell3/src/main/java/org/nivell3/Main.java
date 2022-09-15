@@ -57,9 +57,9 @@ public class Main {
 //
                 //Mostrar stock amb quantitats
                 case 4 -> StoreManager.getInstance(database).showStock();
-//
-//                //Mostrar valor total
-//                case 5 -> StoreManager.getInstance(database).getTotalValue();
+
+                //Mostrar valor total
+                case 5 -> StoreManager.getInstance(database).getTotalValue();
 //
 //                //Crear ticket
 //                case 6 -> StoreManager.getInstance(database).generateTicket();
