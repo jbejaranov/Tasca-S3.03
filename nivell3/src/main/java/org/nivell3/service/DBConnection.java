@@ -9,6 +9,7 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.nivell3.products.Decoration;
 import org.nivell3.products.Flower;
 import org.nivell3.products.Tree;
+import org.nivell3.utils.Ticket;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -48,6 +49,9 @@ public final class DBConnection {
     }
 
     private static Class<?>[] getSubClasses() {
-        return new Class<?>[]{Decoration.class, Flower.class, Tree.class};
+        return new Class<?>[]{Decoration.class,
+                Flower.class,
+                Tree.class,
+                Ticket.class};
     }
 }

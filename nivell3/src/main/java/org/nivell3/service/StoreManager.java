@@ -6,6 +6,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import org.bson.BsonNull;
 import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.nivell3.products.Decoration;
@@ -17,6 +18,7 @@ import org.nivell3.utils.Ticket;
 import org.nivell3.utils.Tuple;
 
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -82,8 +84,8 @@ public class StoreManager {
             //Si no existeix:
             collection_products.insertOne(newProduct);
             System.out.println("Producte afegit");
+        }
     }
-}
 
     public Product addProductQuestions() {
         Product product = null;
@@ -200,17 +202,15 @@ public class StoreManager {
         printTable(collection);
     }
 
-    //
-//    public void showProducts(List<Product> products) {
-//
-//        //Creem un mapa amb llistes de productes classificades per tipus
-//        Map<String, List<Product>> treeMapList = products.stream().sorted(Comparator.comparing(Product::getName))
-//                .collect(Collectors.groupingBy(i -> i.getClass().getSimpleName(), TreeMap::new, Collectors.toList()));
-//
-//        //Mostrem els productes per pantalla
-//        printTable(treeMapList);
-//    }
-//
+    private void showProducts(List<Product> products) {
+
+        //Creem un mapa amb llistes de productes classificades per tipus
+        Map<String, List<Tuple>> collection = getTupleMap(products);
+
+        //Mostrem els productes per pantalla
+        printTable(collection);
+    }
+
     public void getTotalValue() {
 
         //Obtenim el valor total mitjançant una query
@@ -237,146 +237,104 @@ public class StoreManager {
         DecimalFormat decimalFormat = new DecimalFormat("0.00");
         System.out.println("El valor total dels productes de la botiga és: " + decimalFormat.format(valor) + " euros");
     }
-//
-//    //TODO
-//    public void generateTicket() {
-//
-//        //Crea ticket amb timestamp a la BD
-//        int ticketIndex = createTicket();
-//
-//        //Menú
-//        int select;
-//
-//        do {
-//            System.out.println("""
-//                    -------------------
-//                    Escolliu una opció:
-//                    1: Escollir producte
-//                    2: Veure tots els productes seleccionats
-//                    0: Acabar amb la compra i generar tiquet
-//                    ------------------
-//                    """);
-//
-//            select = scanner.nextInt();
-//            scanner.nextLine();
-//
-//            switch (select) {
-//                //Escollir un producte
-//                case 1 -> {
-//                    showStock();
-//
-//                    System.out.println("Introduïu id del producte que desitgeu comprar:");
-//                    int productIndex = scanner.nextInt();
-//                    scanner.nextLine();
-//
-//                    System.out.println("Introduïu quantitat de productes a posar al carro:");
-//                    int quantitatCompra = scanner.nextInt();
-//                    scanner.nextLine();
-//
-//                    Product product = readProductById(productIndex);
-//
-//                    //Si es pot efectuar la compra
-//                    if (product != null) {
-//
-//                        //Quant de stock hi ha disponible
-//                        int quantitatStock = product.getQuantity();
-//
-//                        //Comprovem que la quantitat és correcta
-//                        if (quantitatCompra <= quantitatStock) {
-//
-//                            //Preparem la query per actualitzar
-//                            String sqlUpdate = "UPDATE products SET quantity = ? WHERE id_product = ?";
-//
-//                            //Executem l'actualització
-//                            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlUpdate)) {
-//
-//                                preparedStatement.setInt(1, quantitatStock - quantitatCompra);
-//                                preparedStatement.setInt(2, productIndex);
-//
-//                                preparedStatement.executeUpdate();
-//                            } catch (SQLException e) {
-//                                e.printStackTrace();
-//                            }
-//
-//                            //Preparem la query per inserir les dades del ticket
-//                            String sqlInsert = "INSERT INTO products_tickets (product_id, ticket_id, quantity) VALUES (?, ?, ?)";
-//
-//                            //Executem la inserció
-//                            try (PreparedStatement preparedStatement = connection.prepareStatement(sqlInsert)) {
-//
-//                                preparedStatement.setInt(1, productIndex);
-//                                preparedStatement.setInt(2, ticketIndex);
-//                                preparedStatement.setInt(3, quantitatCompra);
-//
-//                                int i = preparedStatement.executeUpdate();
-//                                if (i == 1) {
-//                                    System.out.println("Producte afegit al tiquet");
-//                                }
-//                            } catch (SQLException e) {
-//                                e.printStackTrace();
-//                            }
-//                        } else {
-//                            System.out.println("No podeu adquirir més articles dels que hi ha disponibles, torneu a provar");
-//                        }
-//                    } else {
-//                        System.out.println("El producte seleccionat no existeix");
-//                    }
-//                }
-//
-////              //Veure tots els productes ja seleccionats
-//                case 2 -> showTicket(ticketIndex);
-//
-//                //Acabar el tiquet
-//                case 0 -> System.out.println("Processant la compra");
-//            }
-//        } while (select != 0);
-//    }
-//
-//    //TODO
-//    private int createTicket() {
-//        int index = 0;
-//
-//        String sqlAdd = "INSERT INTO tickets (datetime) VALUES (?)";
-//        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlAdd, Statement.RETURN_GENERATED_KEYS)) {
-//
-//            preparedStatement.setTimestamp(1, new java.sql.Timestamp(new Date().getTime()));
-//            preparedStatement.executeUpdate();
-//
-//            ResultSet resultSet = preparedStatement.getGeneratedKeys();
-//            if (resultSet.next()) {
-//                index = resultSet.getInt(1);
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        return index;
-//    }
-//
-//    //TODO
-//    private void showTicket(int ticketIndex) {
-//        List<Product> products = new ArrayList<>();
-//        String sqlSelectAll = "SELECT p.*, pt.quantity FROM products_tickets pt JOIN products p ON p.id_product = pt.product_id WHERE pt.ticket_id = ?";
-//
-//        try (PreparedStatement preparedStatement = connection.prepareStatement(sqlSelectAll)) {
-//
-//            preparedStatement.setInt(1, ticketIndex);
-//            ResultSet resultSet = preparedStatement.executeQuery();
-//
-//            while (resultSet.next()) {
-//                String id = resultSet.getString("id_product");
-//                String type = resultSet.getString("type");
-//                String name = resultSet.getString("name");
-//                float price = resultSet.getFloat("price");
-//                int quantity = resultSet.getInt("pt.quantity");
-//                String property = resultSet.getString("property");
-//
-//                products.add(buildProduct(id, type, name, price, quantity, property));
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//        showProducts(products);
-//    }
+
+    public void generateTicket() {
+
+        //Crea ticket amb timestamp
+        Ticket ticket = new Ticket(new ObjectId(), LocalDateTime.now());
+
+        //Menú
+        int select;
+
+        do {
+            System.out.println("""
+                    -------------------
+                    Escolliu una opció:
+                    1: Escollir producte
+                    2: Veure tots els productes seleccionats
+                    0: Acabar amb la compra i generar tiquet
+                    ------------------
+                    """);
+
+            select = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (select) {
+                //Escollir un producte
+                case 1 -> {
+                    showStock();
+
+                    System.out.println("Introduïu id del producte que desitgeu comprar:");
+                    int productIndex = scanner.nextInt();
+                    scanner.nextLine();
+
+                    System.out.println("Introduïu quantitat de productes a posar al carro:");
+                    int quantitatCompra = scanner.nextInt();
+                    scanner.nextLine();
+
+                    //Obtenim els productes
+                    List<Tuple> productTuples = getTupleList(getOrderedProductList());
+
+                    //Si es pot efectuar la compra
+                    if (productIndex <= productTuples.size()) {
+
+                        Product product = productTuples.get(productIndex - 1).getProduct();
+
+                        //Quant de stock hi ha disponible
+                        int quantitatStock = product.getQuantity();
+
+                        //Comprovem que la quantitat és correcta
+                        if (quantitatCompra <= quantitatStock) {
+                            collection_tickets.deleteMany(new Document());
+                            //Preparem la query per actualitzar el valor de la quantitat a la BD
+                            collection_products.updateOne(eq(product.getId()),
+                                    Updates.set("quantity", quantitatStock - quantitatCompra));
+
+                            //Preparem la query per inserir les dades del ticket
+                            addProductToTicket(ticket, product, quantitatCompra);
+
+                        } else {
+                            System.out.println("No podeu adquirir més articles dels que hi ha disponibles, torneu a provar");
+                        }
+                    } else {
+                        System.out.println("El producte seleccionat no existeix");
+                    }
+                }
+
+                //Veure tots els productes ja seleccionats
+                case 2 -> showTicket(ticket);
+
+                //Acabar el tiquet
+                case 0 -> System.out.println("Processant la compra");
+            }
+        } while (select != 0);
+
+        collection_tickets.insertOne(ticket);
+    }
+
+    private void addProductToTicket(Ticket ticket, Product product, int quantitatCompra) {
+        Product newProduct = buildProduct(product.getId(),
+                product.getClass().getSimpleName(),
+                product.getName(),
+                product.getPrice(),
+                quantitatCompra,
+                product.getProperty().toString());
+
+        switch (product.getClass().getSimpleName().toLowerCase()) {
+            case "decoration" -> ticket.addDecoration((Decoration) newProduct);
+            case "flower" -> ticket.addFlower((Flower) newProduct);
+            case "tree" -> ticket.addTree((Tree) newProduct);
+        }
+    }
+
+    private void showTicket(Ticket ticket) {
+        List<Product> list = new ArrayList<>();
+        list.addAll(ticket.getDecorationList());
+        list.addAll(ticket.getFlowerList());
+        list.addAll(ticket.getTreeList());
+
+        showProducts(list);
+    }
 //
 //    //TODO
 //    public void updateStock() {
@@ -578,19 +536,19 @@ public class StoreManager {
 //        return product;
 //    }
 //
-//    //TODO (eliminar?)
-//    private Product buildProduct(String id, String type, String name, float price, int quantity, String property) {
-//        Product product = null;
-//
-//        //Convertim a Product, segons el tipus
-//        switch (type.toLowerCase()) {
-//            case "decoration" -> product = new Decoration(id, name, price, quantity, property);
-//            case "flower" -> product = new Flower(id, name, price, quantity, property);
-//            case "tree" -> product = new Tree(id, name, price, quantity, Double.parseDouble(property));
-//        }
-//        return product;
-//    }
-//
+    private Product buildProduct(ObjectId id, String type, String name, float price, int quantity, String property) {
+        Product product = null;
+
+        //Convertim a Product, segons el tipus
+        switch (type.toLowerCase()) {
+            case "decoration" -> product = new Decoration(id, name, price, quantity, property);
+            case "flower" -> product = new Flower(id, name, price, quantity, property);
+            case "tree" -> product = new Tree(id, name, price, quantity, Double.parseDouble(property));
+        }
+        return product;
+    }
+
+    //
 //    //TODO
 //    private Object getProperty(Product product) {
 //

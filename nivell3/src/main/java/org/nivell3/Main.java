@@ -60,9 +60,9 @@ public class Main {
 
                 //Mostrar valor total
                 case 5 -> StoreManager.getInstance(database).getTotalValue();
-//
-//                //Crear ticket
-//                case 6 -> StoreManager.getInstance(database).generateTicket();
+
+                //Crear ticket
+                case 6 -> StoreManager.getInstance(database).generateTicket();
 //
 //                //Mostrar vendes (historial)
 //                case 7 -> StoreManager.getInstance(database).showHistory();
