@@ -137,7 +137,7 @@ public class StoreManager {
         scanner.nextLine();
 
         //Eliminem el producte
-        Optional<Tuple> optionalTuple = tupleList.stream().filter(tuple -> tuple.getIndex() == deleteIndex).findFirst();
+        Optional<Tuple> optionalTuple = getTupleByTupleId(tupleList, deleteIndex);
 
         if (optionalTuple.isPresent()) {
             //Si existeix
@@ -147,6 +147,10 @@ public class StoreManager {
             //Si no existeix:
             System.out.println("El producte seleccionat no existeix");
         }
+    }
+
+    private Optional<Tuple> getTupleByTupleId(List<Tuple> tupleList, int deleteIndex) {
+        return tupleList.stream().filter(tuple -> tuple.getIndex() == deleteIndex).findFirst();
     }
 
 
@@ -328,76 +332,80 @@ public class StoreManager {
 
         showProducts(list);
     }
-//
-//    //TODO
-//    public void updateStock() {
-//        List<Product> stock = getOrderedProductList();
-//        showStock();
-//
-//        if (!stock.isEmpty()) {
-//
-//            System.out.println("Escolliu l'id del producte que voleu actualitzar:");
-//
-//            //Obtenim l'índex del producte (id)
-//            int index = scanner.nextInt();
-//            scanner.nextLine();
-//
-//            //Obtenim el producte
-//            Product product = readProductById(index);
-//
-//            //Mostrem el producte per pantalla per facilitar-ne la visió
-//            if (product != null) {
-//
-//                System.out.println("Producte seleccionat: ");
-//                List<Product> productToShow = new ArrayList<>();
-//                productToShow.add(product);
-//                showProducts(productToShow);
-//
-//                System.out.println("Escolliu la propietat del producte que voleu canviar:");
-//                System.out.println("""
-//                        1 - Nom
-//                        2 - Preu
-//                        3 - Quantitat
-//                        4 - Material/Color/Alçada
-//                        """);
-//
-//                //Obtenim propietat a canviar
-//                int propertyToChange = scanner.nextInt();
-//                scanner.nextLine();
-//
-//                System.out.println("Introduïu el nou valor:");
-//
-//                //Obtenim nou valor de la propietat
-//                String newValue = scanner.nextLine();
-//
-//                //Preparem la query
-//                String sqlUpdate = "UPDATE products SET %s = ? WHERE id_product = ?";
-//                switch (propertyToChange) {
-//                    case 1 -> sqlUpdate = String.format(sqlUpdate, "name");
-//                    case 2 -> sqlUpdate = String.format(sqlUpdate, "price");
-//                    case 3 -> sqlUpdate = String.format(sqlUpdate, "quantity");
-//                    case 4 -> sqlUpdate = String.format(sqlUpdate, "property");
-//
-//                    default -> System.out.println("El valor seleccionat no és vàlid");
-//                }
-//
-//                //Executem l'actualització
-//                try (PreparedStatement preparedStatement = connection.prepareStatement(sqlUpdate)) {
-//
-//                    preparedStatement.setString(1, newValue);
-//                    preparedStatement.setInt(2, index);
-//
-//                    preparedStatement.executeUpdate();
-//                    System.out.println("Producte actualitzat");
-//                } catch (SQLException e) {
-//                    System.out.println("El producte no s'ha pogut actualitzar correctament");
-//                    e.printStackTrace();
-//                }
-//            } else {
-//                System.out.println("El producte seleccionat no existeix");
-//            }
-//        }
-//    }
+
+    public void updateStock() {
+        List<Tuple> stock = getTupleList(getOrderedProductList());
+        showStock();
+
+        if (!stock.isEmpty()) {
+
+            System.out.println("Escolliu l'id del producte que voleu actualitzar:");
+
+            //Obtenim l'índex del producte (id)
+            int index = scanner.nextInt();
+            scanner.nextLine();
+
+            //Obtenim el producte
+            Tuple tuple = getTupleByTupleId(stock, index).orElse(null);
+
+            //Mostrem el producte per pantalla per facilitar-ne la visió
+            if (tuple != null) {
+
+                Product product = tuple.getProduct();
+
+                System.out.println("Producte seleccionat: ");
+                List<Product> productToShow = new ArrayList<>();
+                productToShow.add(product);
+                showProducts(productToShow);
+
+                System.out.println("Escolliu la propietat del producte que voleu canviar:");
+                System.out.println("""
+                        1 - Nom
+                        2 - Preu
+                        3 - Quantitat
+                        4 - Material/Color/Alçada
+                        """);
+
+                //Obtenim propietat a canviar
+                int propertyToChange = scanner.nextInt();
+                scanner.nextLine();
+
+                System.out.println("Introduïu el nou valor:");
+
+                //Obtenim nou valor de la propietat
+                String newValue = scanner.nextLine();
+
+                //Preparem la query
+                Bson update = null;
+
+                switch (propertyToChange) {
+                    case 1 -> update = Updates.set("name", newValue);
+                    case 2 -> update = Updates.set("price", Float.parseFloat(newValue));
+                    case 3 -> update = Updates.set("quantity", Integer.parseInt(newValue));
+                    case 4 -> {
+                        if ("tree".equalsIgnoreCase(product.getClass().getSimpleName())) {
+                            update = Updates.set("property", Double.parseDouble(newValue));
+                        } else {
+                            update = Updates.set("property", newValue);
+                        }
+                    }
+
+                    default -> System.out.println("El valor seleccionat no és vàlid");
+                }
+
+                //Executem l'actualització
+                if (update != null) {
+                    collection_products.updateOne(eq(product.getId()), update);
+                }
+                System.out.println("Producte actualitzat");
+
+            } else {
+                System.out.println("El producte seleccionat no existeix");
+            }
+        } else {
+            System.out.println("No hi ha productes a mostrar");
+        }
+    }
 
     public void showHistory() {
 

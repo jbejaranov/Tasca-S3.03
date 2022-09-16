@@ -1,14 +1,6 @@
 package org.nivell3;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-import org.nivell3.products.Decoration;
-import org.nivell3.products.Flower;
-import org.nivell3.products.Product;
-import org.nivell3.products.Tree;
 import org.nivell3.service.DBConnection;
 import org.nivell3.service.StoreManager;
 
@@ -43,9 +35,9 @@ public class Main {
                 //Introduir producte a botiga
                 case 1 -> StoreManager.getInstance(database).addProduct();
 
-//                //Actualitzar producte a botiga
-//                case 2 -> StoreManager.getInstance(database).updateStock();
-//
+                //Actualitzar producte a botiga
+                case 2 -> StoreManager.getInstance(database).updateStock();
+
                 //Esborrar producte de botiga
                 case 3 -> StoreManager.getInstance(database).deleteProduct();
 
